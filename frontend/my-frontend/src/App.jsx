@@ -8,6 +8,9 @@ import SuperAdminLayout from "./layouts/SuperAdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 
+import CreateReport from "./pages/CreateReport";
+import MyReports from "./pages/MyReports";
+
 import { getAuth } from "./utils/auth";
 
 // 🔁 Role → Route mapping
@@ -26,7 +29,6 @@ const getRedirectPath = (role) => {
   }
 };
 
-// Temporary dashboard pages
 const StudentPage = () => <h1>Student Dashboard</h1>;
 const AdminPage = () => <h1>Admin Dashboard</h1>;
 const PatrolPage = () => <h1>Patrol Dashboard</h1>;
@@ -34,31 +36,20 @@ const SuperAdminPage = () => <h1>Super Admin Dashboard</h1>;
 
 function App() {
   const { token, role } = getAuth();
-
-  // ✅ Prevent redirect loop (IMPORTANT FIX)
-  const isValidAuth = token && role;
+  const isAuthenticated = !!token && !!role;
 
   return (
     <Router>
       <Routes>
 
-        {/* 🔐 Root Redirect */}
-        <Route
-          path="/"
-          element={
-            isValidAuth ? (
-              <Navigate to={getRedirectPath(role)} replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+        {/* ✅ ROOT → ALWAYS GO TO LOGIN */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* 🔐 Login Route */}
+        {/* 🔐 LOGIN */}
         <Route
           path="/login"
           element={
-            isValidAuth ? (
+            isAuthenticated ? (
               <Navigate to={getRedirectPath(role)} replace />
             ) : (
               <Login />
@@ -70,6 +61,8 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
           <Route path="/student" element={<StudentLayout />}>
             <Route index element={<StudentPage />} />
+            <Route path="create-report" element={<CreateReport />} />
+            <Route path="my-reports" element={<MyReports />} />
           </Route>
         </Route>
 
@@ -94,7 +87,7 @@ function App() {
           </Route>
         </Route>
 
-        {/* ❌ Fallback */}
+        {/* ❌ FALLBACK */}
         <Route path="*" element={<h1>404 Not Found</h1>} />
 
       </Routes>

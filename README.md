@@ -1,86 +1,113 @@
-# Campus Women Safety System
+# 🛡️ Campus Women Safety System
 
-This repository contains the source code for the **Campus Women Safety System**, featuring a comprehensive backend API service and an interactive frontend React web application.
+[![Node.js](https://img.shields.io/badge/Node.js-LTS-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-Backend-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![React](https://img.shields.io/badge/React-v19-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Vite](https://img.shields.io/badge/Vite-Bundler-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 
-The project is structured as a monorepo containing two main directories:
-
-- `/backend`: A Node.js and Express server providing REST API endpoints and Socket.io for real-time functionality.
-- `/frontend/my-frontend`: A React frontend application setup with Vite and Tailwind CSS.
-
-## Technologies Used
-
-### Backend
-- **Node.js**: JavaScript runtime environment.
-- **Express.js**: Web framework for APIs.
-- **MongoDB & Mongoose**: NoSQL database and object modeling.
-- **Socket.io**: Enabling real-time, bidirectional communication.
-- **JSON Web Tokens (JWT)**: For robust authentication.
-- **Bcrypt**: Used for secure password hashing.
-
-### Frontend
-- **React (v19)**: User interface library.
-- **Vite**: Next-generation frontend tooling and bundler.
-- **Tailwind CSS (v4)**: Utility-first CSS framework for styling.
+The **Campus Women Safety System** is a full-stack web application designed to enhance campus security. It features role-based dashboards, real-time incident reporting, and secure authentication to ensure a safe environment for students.
 
 ---
 
-## Core Features
-- **Role-Based Access Control (RBAC)**: Comprehensive backend (`roleMiddleware.js`) and frontend (`ProtectedRoute.jsx`) enforcement verifying varying access levels (`student`, `admin`, `patrol`, `super_admin`).
-- **Secure Authentication**: Complete JWT-based authentication system with secure password hashing, bundled with a React login interface mapping tokens to `localStorage`.
-- **Role-Specific Dashboards**: Custom routing layers that automatically redirect users to dedicated dashboard layouts (`StudentLayout`, `AdminLayout`, `PatrolLayout`, etc.) upon sign-in based on their designated account role.
-- **Global Error Handling**: Comprehensive backend middleware to intercept and standardize API error responses, maintaining a reliable API contract logic.
+## 🏗️ Project Architecture
+
+This is a monorepo containing both the backend API and frontend React application:
+```text
+PARAS/
+├── backend/                  # Node.js + Express backend service
+│   ├── src/
+│   │   ├── controllers/      # Route controllers (logic)
+│   │   ├── middleware/       # Custom middleware (auth, rbac)
+│   │   ├── models/           # Mongoose schemas
+│   │   ├── routes/           # Express route definitions
+│   │   └── server.js         # API entry point
+│   └── package.json
+└── frontend/
+    └── my-frontend/          # React + Vite frontend application
+        ├── src/
+        │   ├── components/   # Reusable UI components
+        │   ├── pages/        # Dashboard & view pages
+        │   └── App.jsx       # Main App component
+        └── package.json
+```
 
 ---
 
-## Getting Started
+## ✨ Core Features
+
+-   **Role-Based Access Control (RBAC):** Tiered access levels (`student`, `admin`, `patrol`, `super_admin`) enforcing strict layout routing and backend middleware capabilities.
+-   **Real-time Communication:** Powered by `Socket.io` for live incident reporting and instant notification dissemination.
+-   **Security First:** Enforced with JSON Web Tokens (JWT) for stateless authentication and bcrypt for password hashing.
+-   **Responsive Design:** Utilizing Tailwind CSS v4, guaranteeing seamless operation across mobile devices and desktop workstations.
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-Before running the application, make sure you have the following installed:
-- [Node.js](https://nodejs.org/) (LTS recommended)
-- [MongoDB](https://www.mongodb.com/) (Running locally or a MongoDB Atlas connection string)
 
-### Backend Setup
+Ensure you have the following installed on your local machine:
+-   [Node.js](https://nodejs.org/en/download/) (v18 or higher recommended)
+-   [MongoDB](https://www.mongodb.com/try/download/community) (Local instance or Atlas connection)
 
-1. **Navigate to the backend directory**
-   ```bash
-   cd backend
-   ```
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-3. **Environment Setup**
-   Create a `.env` file inside the `backend` folder and configure the required environment variables (for example):
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/campus-safety
-   JWT_SECRET=your_jwt_secret_key
-   ```
-4. **Start the Development Server**
-   ```bash
-   npm run dev
-   ```
+### 1. Backend Setup
 
-### Frontend Setup
+Navigate to the `backend` directory and set up the server:
 
-1. **Navigate to the frontend directory**
-   ```bash
-   cd frontend/my-frontend
-   ```
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-3. **Environment Setup** (If applicable)
-   Create a `.env` file mapped to Vite's system (e.g., `VITE_API_BASE_URL=http://localhost:5000/api`) if required by the React app.
-4. **Start the Vite Development Server**
-   ```bash
-   npm run dev
-   ```
+```bash
+cd backend
+npm install
+```
 
-## Contribution
+**Environment Variables:** Create a `.env` file in the `backend/` directory:
+```env
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/campus-safety
+JWT_SECRET=your_super_secret_jwt_key
+```
+
+**Start the Server:**
+```bash
+npm run dev
+# Server should now be running on http://localhost:5000
+```
+
+### 2. Frontend Setup
+
+In a new terminal window, navigate to the frontend directory:
+
+```bash
+cd frontend/my-frontend
+npm install
+```
+
+**Environment Variables:** Create a `.env` file in the `frontend/my-frontend/` directory (if required):
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+**Start the Client:**
+```bash
+npm run dev
+# The application will typically start on http://localhost:5173
+```
+
+---
+
+## 🔒 Security Practices
+
+-   **Environment Variables:** Ensure `.env` is strictly ignored by version control. (See `.gitignore`).
+-   **Uploads Directory:** The `backend/uploads/` directory is ignored to avoid pushing local files or sensitive assets to the repository.
+-   **API Authorization:** All sensitive endpoints must utilize the `verifyToken` middleware before processing.
+
+---
+
+## 🤝 Contributing
+
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request

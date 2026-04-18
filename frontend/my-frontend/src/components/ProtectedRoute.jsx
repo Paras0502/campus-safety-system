@@ -1,20 +1,20 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { getAuth } from "../utils/auth";
 
 const ProtectedRoute = ({ allowedRoles }) => {
-    const { token, role } = getAuth();
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
     // ❌ Not logged in
     if (!token) {
         return <Navigate to="/login" replace />;
     }
 
-    // ❌ Role not allowed
+    // ❌ Wrong role
     if (allowedRoles && !allowedRoles.includes(role)) {
         return <Navigate to="/login" replace />;
     }
 
-    // ✅ Authorized
+    // ✅ Allow nested routes
     return <Outlet />;
 };
 
