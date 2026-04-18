@@ -25,6 +25,7 @@ const authMiddleware = (req, res, next) => {
 
         next();
     } catch (error) {
+        console.error("Auth Error:", error.message); // 🔥 Added logging
         return res.status(401).json({ message: "Not authorized, token failed" });
     }
 };

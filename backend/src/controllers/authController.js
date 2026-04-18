@@ -47,14 +47,14 @@ export const registerUser = async (req, res, next) => {
             name,
             email,
             password: hashedPassword,
-            role: "student", // default
+            role: "student",
             isActive: true,
         });
 
         // 🎟 Generate token
         const token = generateToken(user);
 
-        // ✅ Response (STRICT API CONTRACT)
+        // ✅ Response
         res.status(201).json({
             token,
             role: user.role,
@@ -81,6 +81,11 @@ export const loginUser = async (req, res, next) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
+        // ❗ NEW: Check if user is active
+        if (!user.isActive) {
+            return res.status(403).json({ message: "Account is deactivated" });
+        }
+
         // 🔐 Compare password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -90,7 +95,7 @@ export const loginUser = async (req, res, next) => {
         // 🎟 Generate token
         const token = generateToken(user);
 
-        // ✅ Response (STRICT API CONTRACT)
+        // ✅ Response
         res.status(200).json({
             token,
             role: user.role,

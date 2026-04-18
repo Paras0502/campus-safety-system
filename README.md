@@ -25,9 +25,10 @@ The project is structured as a monorepo containing two main directories:
 ---
 
 ## Core Features
-- **Role-Based Access Control (RBAC)**: Built-in support for different user roles including `student`, `admin`, `patrol`, and `super_admin`.
-- **Secure Authentication**: Complete JWT-based authentication system with secure password hashing.
-- **Global Error Handling**: Comprehensive backend middleware to intercept and standardize API error responses.
+- **Role-Based Access Control (RBAC)**: Comprehensive backend (`roleMiddleware.js`) and frontend (`ProtectedRoute.jsx`) enforcement verifying varying access levels (`student`, `admin`, `patrol`, `super_admin`).
+- **Secure Authentication**: Complete JWT-based authentication system with secure password hashing, bundled with a React login interface mapping tokens to `localStorage`.
+- **Role-Specific Dashboards**: Custom routing layers that automatically redirect users to dedicated dashboard layouts (`StudentLayout`, `AdminLayout`, `PatrolLayout`, etc.) upon sign-in based on their designated account role.
+- **Global Error Handling**: Comprehensive backend middleware to intercept and standardize API error responses, maintaining a reliable API contract logic.
 
 ---
 
