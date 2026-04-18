@@ -24,6 +24,13 @@ The project is structured as a monorepo containing two main directories:
 
 ---
 
+## Core Features
+- **Role-Based Access Control (RBAC)**: Built-in support for different user roles including `student`, `admin`, `patrol`, and `super_admin`.
+- **Secure Authentication**: Complete JWT-based authentication system with secure password hashing.
+- **Global Error Handling**: Comprehensive backend middleware to intercept and standardize API error responses.
+
+---
+
 ## Getting Started
 
 ### Prerequisites

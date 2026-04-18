@@ -22,6 +22,7 @@ jspm_packages/
 .Trashes
 ehthumbs.db
 Thumbs.db
+Thumbs.db:encryptable
 
 # Global Environment Variables
 .env
@@ -34,6 +35,8 @@ Thumbs.db
 backend/.env
 backend/.env.*
 backend/uploads/
+backend/coverage/
+backend/test-results/
 
 # Frontend Specific
 frontend/my-frontend/dist/
@@ -42,6 +45,13 @@ frontend/my-frontend/.env
 frontend/my-frontend/.env.local
 frontend/my-frontend/.env.*.local
 frontend/my-frontend/.eslintcache
+frontend/my-frontend/coverage/
+
+# Output and build directories
+dist/
+dist-ssr/
+build/
+out/
 
 # Optional npm cache directory
 .npm
@@ -57,3 +67,8 @@ frontend/my-frontend/.eslintcache
 .vscode/
 *.swp
 *.swo
+*.swn
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
