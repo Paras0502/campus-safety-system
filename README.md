@@ -39,8 +39,9 @@ PARAS/
 
 -   **Role-Based Access Control (RBAC):** Tiered access levels (`student`, `admin`, `patrol`, `super_admin`) enforcing strict layout routing and backend middleware capabilities.
 -   **Real-time Communication:** Powered by `Socket.io` for live incident reporting and instant notification dissemination.
--   **Security First:** Enforced with JSON Web Tokens (JWT) for stateless authentication and bcrypt for password hashing.
--   **Responsive Design:** Utilizing Tailwind CSS v4, guaranteeing seamless operation across mobile devices and desktop workstations.
+-   **Advanced Security Architecture:** Enforced dual-token system (15-minute Access Tokens via headers, 7-day secure HTTP-only Refresh Cookies) and bcrypt password hashing.
+-   **Anti-Spam & Hardened Flow:** Robust backend middleware enforcing rate-limits (1 SOS per 30-seconds) and precise parameter validation to maintain clean databases.
+-   **Modern & Responsive UI:** Complete UI overhaul utilizing Tailwind CSS v4, Lucide-React iconography, and glassmorphism styling, guaranteeing seamless operation and interactive feedback (`react-hot-toast`) across all devices.
 
 ---
 

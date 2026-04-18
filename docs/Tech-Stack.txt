@@ -1,0 +1,144 @@
+# 🧱 Tech Stack Document (MVP - Localhost)
+
+## Project: Campus Women Safety System
+
+---
+
+## 1. Overview
+
+This document defines the technology stack for building the Campus Women Safety System focused on **local development (localhost)**.
+
+Goal:
+
+* Build a fully working system locally
+* Focus on functionality, real-time features, and role-based access
+* Ignore deployment and scaling for now
+
+---
+
+## 2. Core Stack (MERN)
+
+### Frontend
+
+* React.js
+* Tailwind CSS
+* React Router
+
+### Backend
+
+* Node.js
+* Express.js
+
+### Database
+
+* MongoDB (Local or MongoDB Atlas free tier)
+
+---
+
+## 3. Real-Time Communication Layer
+
+### Socket.IO
+
+Used for:
+
+* SOS alerts
+* Live location tracking
+* Patrol communication
+
+---
+
+## 4. Maps & Location Services
+
+### Google Maps API
+
+Used for:
+
+* Displaying user location
+* Tracking movement
+* Navigation for patrol teams
+
+---
+
+## 5. Authentication & Security
+
+* JWT (JSON Web Tokens)
+* bcrypt (password hashing)
+
+Used for:
+
+* Secure login
+* Role-based access control
+* Token-based session handling
+
+---
+
+## 6. Media Handling (MVP)
+
+### Local Storage
+
+* Store uploaded files in backend `/uploads` folder
+
+Future Upgrade:
+
+* Cloudinary (for scalable storage)
+
+---
+
+## 7. Backend Architecture Components
+
+* REST API layer (Express)
+* WebSocket server (Socket.IO)
+* Middleware:
+
+  * Authentication
+  * Role-based access
+* Controllers
+* Models (MongoDB)
+
+---
+
+## 8. Frontend Architecture Components
+
+Single React application with role-based dashboards:
+
+* Student Dashboard
+* Security Admin Dashboard
+* Patrol Dashboard
+* Super Admin Panel
+
+---
+
+## 9. Local Development Setup
+
+### Frontend
+
+* Runs on: [http://localhost:3000](http://localhost:3000)
+
+### Backend
+
+* Runs on: [http://localhost:5000](http://localhost:5000)
+
+### Database
+
+* MongoDB local instance or Atlas
+
+---
+
+## 10. Scope Decisions (MVP)
+
+### Included
+
+* Real-time SOS system
+* Live tracking
+* Reporting system
+* Role-based dashboards
+
+### Excluded (for now)
+
+* Deployment (Vercel, Render)
+* Docker
+* Scaling optimizations
+
+---
+
+## Status: Tech Stack Finalized (MVP Localhost)

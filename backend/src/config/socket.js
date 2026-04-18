@@ -1,29 +1,21 @@
-const { Server } = require("socket.io");
+import { Server } from "socket.io";
 
 let io;
 
-const initSocket = (server) => {
+export const initIO = (server) => {
     io = new Server(server, {
         cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
-        }
-    });
-
-    io.on("connection", (socket) => {
-        console.log("⚡ Client connected:", socket.id);
-
-        socket.on("disconnect", () => {
-            console.log("❌ Client disconnected:", socket.id);
-        });
+            origin: "http://localhost:3000",
+            methods: ["GET", "POST", "PATCH"],
+        },
     });
 
     return io;
 };
 
-const getIO = () => {
-    if (!io) throw new Error("Socket.io not initialized");
+export const getIO = () => {
+    if (!io) {
+        throw new Error("Socket.IO not initialized!");
+    }
     return io;
 };
-
-module.exports = { initSocket, getIO };

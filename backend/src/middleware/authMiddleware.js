@@ -1,32 +1,43 @@
 import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     try {
-        let token;
+        const authHeader = req.headers.authorization;
 
-        // ✅ Check Authorization header
-        if (
-            req.headers.authorization &&
-            req.headers.authorization.startsWith("Bearer")
-        ) {
-            token = req.headers.authorization.split(" ")[1];
+        // 🔒 Check token existence
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
+                success: false,
+                message: "No token provided",
+            });
         }
 
-        // ❌ No token
-        if (!token) {
-            return res.status(401).json({ message: "Not authorized, no token" });
-        }
+        const token = authHeader.split(" ")[1];
 
-        // ✅ Verify token
+        // 🔑 Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // ✅ Attach user info to request
-        req.user = decoded;
+        // 🔥 IMPORTANT: Fetch full user from DB
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        // ✅ Attach full user object
+        req.user = user;
 
         next();
     } catch (error) {
-        console.error("Auth Error:", error.message); // 🔥 Added logging
-        return res.status(401).json({ message: "Not authorized, token failed" });
+        console.error("Auth Error:", error.message);
+        return res.status(401).json({
+            success: false,
+            message: "Invalid token",
+        });
     }
 };
 
