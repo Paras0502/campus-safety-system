@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js"; // ✅ FIXED
 import sosRoutes from "./routes/sosRoutes.js";
+import locationRoutes from "./routes/locationRoutes.js";
 
 import errorHandler from "./middleware/errorHandler.js";
 
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/sos", sosRoutes);
+app.use("/api/location", locationRoutes);
 
 app.use(errorHandler);
 

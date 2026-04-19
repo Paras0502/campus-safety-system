@@ -39,6 +39,7 @@ PARAS/
 
 -   **Role-Based Access Control (RBAC):** Tiered access levels (`student`, `admin`, `patrol`, `super_admin`) enforcing strict layout routing and backend middleware capabilities.
 -   **Real-time Communication:** Powered by `Socket.io` for live incident reporting and instant notification dissemination.
+-   **Live Map Tracking (Phase 6 Completed):** Integrated `Leaflet` and OpenStreetMap with the WebSocket stream to visualize active SOS victims in real-time, utilizing `navigator.geolocation` for dynamic tracking.
 -   **Advanced Security Architecture:** Enforced dual-token system (15-minute Access Tokens via headers, 7-day secure HTTP-only Refresh Cookies) and bcrypt password hashing.
 -   **Anti-Spam & Hardened Flow:** Robust backend middleware enforcing rate-limits (1 SOS per 30-seconds) and precise parameter validation to maintain clean databases.
 -   **Modern & Responsive UI:** Complete UI overhaul utilizing Tailwind CSS v4, Lucide-React iconography, and glassmorphism styling, guaranteeing seamless operation and interactive feedback (`react-hot-toast`) across all devices.

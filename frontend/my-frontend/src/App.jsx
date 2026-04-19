@@ -70,9 +70,11 @@ const AdminPage = () => (
   </div>
 );
 
+import LiveMap from "./components/LiveMap";
+
 const PatrolPage = () => (
-  <div>
-    <h2 className="text-3xl font-bold text-slate-800 mb-6">Patrol Output</h2>
+  <div className="flex flex-col gap-6">
+    <h2 className="text-3xl font-bold text-slate-800">Patrol Output</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 ring-1 ring-red-50">
         <h3 className="text-lg font-bold text-slate-700 mb-2">Active Emergencies</h3>
@@ -82,6 +84,10 @@ const PatrolPage = () => (
         <h3 className="text-lg font-bold text-slate-700 mb-2">Patrol Coverage</h3>
         <p className="text-4xl font-black text-slate-900">100%</p>
       </div>
+    </div>
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h3 className="text-lg font-bold text-slate-700 mb-4">Live SOS Tracking</h3>
+        <LiveMap />
     </div>
   </div>
 );

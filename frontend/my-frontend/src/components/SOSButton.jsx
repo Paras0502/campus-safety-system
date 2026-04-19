@@ -2,40 +2,75 @@ import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+import socket from "../socket";
+
 const SOSButton = () => {
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [trackingId, setTrackingId] = useState(null);
 
     const handleSOS = async () => {
+        if (!("geolocation" in navigator)) {
+            toast.error("Geolocation is not supported by your browser");
+            return;
+        }
+
         try {
             setLoading(true);
 
-            // Dummy location (we will upgrade later in Phase 6)
-            const location = {
-                lat: 0,
-                lng: 0,
-            };
+            // Get initial location
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const location = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
 
-            const token = localStorage.getItem("token");
+                    const token = localStorage.getItem("token");
 
-            await axios.post(
-                "http://localhost:5000/api/sos/trigger",
-                { location },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                    const res = await axios.post(
+                        "http://localhost:5000/api/sos/trigger",
+                        { location },
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+
+                    const caseId = res.data.data.caseId;
+                    toast.success("🚨 Emergency SOS Triggered!");
+
+                    // Start streaming location for live tracking
+                    const id = navigator.geolocation.watchPosition(
+                        (pos) => {
+                            socket.emit("location:update", {
+                                caseId,
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude,
+                            });
+                        },
+                        (err) => console.error("Tracking Error:", err),
+                        { enableHighAccuracy: true, maximumAge: 0 }
+                    );
+
+                    setTrackingId(id);
+                    setShowModal(false);
+                    setLoading(false);
+                },
+                (error) => {
+                    console.error("Location Error:", error);
+                    toast.error("Could not fetch location. SOS aborted.");
+                    setLoading(false);
+                    setShowModal(false);
+                },
+                { enableHighAccuracy: true }
             );
-
-            toast.success("🚨 Emergency SOS Triggered!");
-            setShowModal(false);
 
         } catch (error) {
             console.error("SOS Error:", error);
             const msg = error.response?.data?.message || "Failed to trigger SOS";
             toast.error(msg);
-        } finally {
             setLoading(false);
             setShowModal(false);
         }
