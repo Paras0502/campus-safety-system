@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useEffect } from "react";
 
 import StudentLayout from "./layouts/StudentLayout";
 import AdminLayout from "./layouts/AdminLayout";
@@ -11,8 +12,13 @@ import Login from "./pages/Login";
 
 import CreateReport from "./pages/CreateReport";
 import MyReports from "./pages/MyReports";
+import AdminCases from "./pages/AdminCases";
+import CaseDetail from "./pages/CaseDetail";
+import PatrolDashboard from "./pages/PatrolDashboard";
+import AdminUsers from "./pages/AdminUsers";
 
 import { getAuth } from "./utils/auth";
+import { connectSocket } from "./socket";
 
 // 🔁 Role → Route mapping
 const getRedirectPath = (role) => {
@@ -122,6 +128,10 @@ function App() {
   const { token, role } = getAuth();
   const isAuthenticated = !!token && !!role;
 
+  useEffect(() => {
+    if (token) connectSocket(token);
+  }, [token]);
+
   return (
     <Router>
       <Toaster position="top-right" />
@@ -155,13 +165,16 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminPage />} />
+            <Route path="cases" element={<AdminCases />} />
+            <Route path="cases/:id" element={<CaseDetail />} />
+            <Route path="users" element={<AdminUsers />} />
           </Route>
         </Route>
 
         {/* 🔐 PATROL */}
         <Route element={<ProtectedRoute allowedRoles={["patrol"]} />}>
           <Route path="/patrol" element={<PatrolLayout />}>
-            <Route index element={<PatrolPage />} />
+            <Route index element={<PatrolDashboard />} />
           </Route>
         </Route>
 
@@ -169,6 +182,7 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["super_admin"]} />}>
           <Route path="/super-admin" element={<SuperAdminLayout />}>
             <Route index element={<SuperAdminPage />} />
+            <Route path="users" element={<AdminUsers />} />
           </Route>
         </Route>
 

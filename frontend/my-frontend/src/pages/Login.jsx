@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { setAuth } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
+import { connectSocket } from "../socket";
 import { Shield, Mail, Lock, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -22,11 +23,13 @@ const Login = () => {
                 {
                     email,
                     password,
-                }
+                },
+                { withCredentials: true }
             );
 
             // ✅ Store auth
             setAuth(res.data.data);
+            connectSocket(res.data.data.token);
 
             const role = res.data.data.role;
             toast.success("Login Successful!");
@@ -118,7 +121,7 @@ const Login = () => {
                         </button>
                     </form>
                 </div>
-                
+
                 <div className="px-10 py-4 bg-slate-900/50 border-t border-white/5 flex justify-center">
                     <p className="text-xs text-slate-500">
                         Secure Campus Access Protocol
