@@ -16,8 +16,14 @@ const caseSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["active", "resolved", "closed"],
-            default: "active",
+            enum: [
+                "submitted",
+                "under_review",
+                "investigating",
+                "action_taken",
+                "closed",
+            ],
+            default: "submitted",
         },
 
         assignedAdmins: [

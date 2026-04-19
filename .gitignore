@@ -80,3 +80,8 @@ out/
 .eslintcache
 .node_repl_history
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+.gemini/
+*.log
+debug.log
+*.bak
+*.tmp

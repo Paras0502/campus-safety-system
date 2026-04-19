@@ -1,5 +1,6 @@
 import Case from "../models/Case.js";
 import User from "../models/User.js";
+import { updateCaseStatusWithWorkflow, handleAssignmentUpdate } from "../services/caseService.js";
 
 // @desc    Get cases based on role
 // @route   GET /api/admin/cases
@@ -84,6 +85,9 @@ export const assignCase = async (req, res) => {
             return res.status(404).json({ success: false, message: "Case not found" });
         }
 
+        // ✅ Trigger real-time sync for assignment
+        await handleAssignmentUpdate(updatedCase);
+
         res.status(200).json({
             success: true,
             data: updatedCase,
@@ -103,20 +107,8 @@ export const updateCaseStatus = async (req, res) => {
         const { status } = req.body;
         const caseId = req.params.id;
 
-        const validStatuses = ["active", "resolved", "closed"];
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({ success: false, message: "Invalid status" });
-        }
-
-        const updatedCase = await Case.findByIdAndUpdate(
-            caseId,
-            { status },
-            { new: true }
-        );
-
-        if (!updatedCase) {
-            return res.status(404).json({ success: false, message: "Case not found" });
-        }
+        // Use Service for workflow enforcement + sync + socket
+        const updatedCase = await updateCaseStatusWithWorkflow(caseId, status, req.user.role);
 
         res.status(200).json({
             success: true,
@@ -124,8 +116,8 @@ export const updateCaseStatus = async (req, res) => {
             message: `Case status updated to ${status}`
         });
     } catch (error) {
-        console.error("Update Case Status Error:", error);
-        res.status(500).json({ success: false, message: "Server Error updating case status" });
+        console.error("Update Case Status Error:", error.message);
+        res.status(400).json({ success: false, message: error.message || "Failed to update status" });
     }
 };
 

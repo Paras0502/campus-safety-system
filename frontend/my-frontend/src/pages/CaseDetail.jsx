@@ -3,10 +3,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import { getAuth } from "../utils/auth";
 import toast from "react-hot-toast";
+import { useSocket } from "../context/SocketContext"; // Assuming a SocketContext exists from Phase 5/7
+
+const STATUS_ORDER = [
+    "submitted",
+    "under_review",
+    "investigating",
+    "action_taken",
+    "closed",
+];
 
 const CaseDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const socket = useSocket();
     const [caseData, setCaseData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [patrolIdInput, setPatrolIdInput] = useState("");
@@ -23,7 +33,23 @@ const CaseDetail = () => {
         }
     };
 
-    useEffect(() => { fetchCase(); }, [id]);
+    useEffect(() => { 
+        fetchCase(); 
+        
+        // 📡 Real-time Sync Integration (Step 6)
+        if (socket) {
+            socket.on("case:update", (data) => {
+                if (data.caseId === id) {
+                    toast.success("Case updated remotely");
+                    fetchCase();
+                }
+            });
+        }
+
+        return () => {
+            if (socket) socket.off("case:update");
+        };
+    }, [id, socket]);
 
     const handleStatusUpdate = async (newStatus) => {
         try {
@@ -31,18 +57,15 @@ const CaseDetail = () => {
             toast.success(`Status updated to ${newStatus}`);
             fetchCase();
         } catch (error) {
-            toast.error("Failed to update status");
+            toast.error(error.response?.data?.message || "Failed to update status");
         }
     };
 
     const handleAssignPatrol = async (e) => {
         e.preventDefault();
         try {
-            // simple parsing for multiple IDs if comma-separated
             const patrolIds = patrolIdInput.split(",").map(i => i.trim()).filter(i => i);
-            
             await api.patch(`/admin/cases/${id}/assign`, { patrolIds });
-            
             toast.success("Patrol assigned successfully");
             setPatrolIdInput("");
             fetchCase();
@@ -54,6 +77,8 @@ const CaseDetail = () => {
     if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Loading case details...</div>;
     if (!caseData) return null;
 
+    const currentStatusIndex = STATUS_ORDER.indexOf(caseData.status);
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             {/* Header */}
@@ -63,8 +88,8 @@ const CaseDetail = () => {
                         <h2 className="text-2xl font-black text-slate-800">Case Details</h2>
                         <p className="text-slate-500 font-mono text-sm mt-1">{caseData._id}</p>
                     </div>
-                    <span className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest ${caseData.status === 'active' ? 'bg-amber-100 text-amber-700' : caseData.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}`}>
-                        {caseData.status}
+                    <span className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-700 border border-slate-200`}>
+                        {caseData.status.replace("_", " ")}
                     </span>
                 </div>
 
@@ -80,26 +105,45 @@ const CaseDetail = () => {
                 </div>
             </div>
 
+            {/* Workflow Board */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+                    Workflow Enforcement
+                </h3>
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between relative">
+                    {STATUS_ORDER.map((s, index) => {
+                        const isCompleted = index < currentStatusIndex;
+                        const isCurrent = index === currentStatusIndex;
+                        const isNext = index === currentStatusIndex + 1;
+
+                        return (
+                            <div key={s} className="flex-1 w-full flex flex-col items-center gap-2">
+                                <button
+                                    onClick={() => handleStatusUpdate(s)}
+                                    disabled={!isNext}
+                                    className={`w-full py-3 px-4 rounded-xl font-bold transition text-xs uppercase tracking-tighter
+                                        ${isCompleted ? 'bg-green-100 text-green-700 border border-green-200' : 
+                                          isCurrent ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 
+                                          isNext ? 'bg-white text-slate-600 border-2 border-dashed border-slate-300 hover:border-blue-500 hover:text-blue-600' : 
+                                          'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'}`}
+                                >
+                                    {s.replace("_", " ")}
+                                </button>
+                                {index < STATUS_ORDER.length - 1 && (
+                                    <div className="hidden md:block absolute h-[2px] bg-slate-100 -z-10" style={{ width: '15%', left: `${index * 20 + 15}%` }}></div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <p className="text-xs text-slate-400 mt-6 text-center italic">
+                    Sequential workflow enforced. You can only move to the next status.
+                </p>
+            </div>
+
             {/* Management Board */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Status Update */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Update Status</h3>
-                    <div className="flex gap-2">
-                        {['active', 'resolved', 'closed'].map((s) => (
-                            <button
-                                key={s}
-                                onClick={() => handleStatusUpdate(s)}
-                                disabled={caseData.status === s}
-                                className={`flex-1 py-2 px-4 rounded font-bold transition capitalize ${caseData.status === s ? 'bg-slate-800 text-white cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                            >
-                                {s}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
                 {/* Assignment Form */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h3 className="text-lg font-bold text-slate-800 mb-4">Assign Patrol Units</h3>
@@ -112,7 +156,7 @@ const CaseDetail = () => {
                             onChange={(e) => setPatrolIdInput(e.target.value)}
                             required
                         />
-                        <button type="submit" className="bg-blue-600 text-white font-bold px-4 py-2 rounded hover:bg-blue-700 transition">
+                        <button type="submit" className="bg-slate-800 text-white font-bold px-4 py-2 rounded hover:bg-slate-900 transition text-sm">
                             Assign
                         </button>
                     </form>
@@ -124,8 +168,9 @@ const CaseDetail = () => {
                         ) : (
                             <ul className="space-y-2">
                                 {caseData.assignedPatrols.map(p => (
-                                    <li key={p._id} className="text-sm bg-slate-50 p-2 rounded border border-slate-100 font-medium text-slate-700">
-                                        {p.name} <span className="text-slate-400 font-normal">({p.email})</span>
+                                    <li key={p._id} className="text-sm bg-slate-50 p-2 rounded border border-slate-100 font-medium text-slate-700 flex justify-between">
+                                        <span>{p.name}</span>
+                                        <span className="text-slate-400 text-xs font-mono">{p.email}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -133,6 +178,30 @@ const CaseDetail = () => {
                     </div>
                 </div>
 
+                {/* Report Info Summary */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 className="text-lg font-bold text-slate-800 mb-4">Linked Report</h3>
+                    {caseData.reportId ? (
+                        <div className="space-y-3">
+                            <div>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Incident Type</span>
+                                <p className="text-sm font-bold text-slate-700">{caseData.reportId.incidentType || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Description</span>
+                                <p className="text-sm text-slate-600 line-clamp-3">{caseData.reportId.description}</p>
+                            </div>
+                            <button 
+                                onClick={() => navigate(`/admin/reports/${caseData.reportId._id || caseData.reportId}`)}
+                                className="text-blue-600 text-xs font-bold hover:underline"
+                            >
+                                View Full Report →
+                            </button>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-slate-400 italic">No report linked (SOS triggered?)</p>
+                    )}
+                </div>
             </div>
         </div>
     );

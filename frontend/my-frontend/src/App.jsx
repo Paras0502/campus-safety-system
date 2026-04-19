@@ -18,7 +18,7 @@ import PatrolDashboard from "./pages/PatrolDashboard";
 import AdminUsers from "./pages/AdminUsers";
 
 import { getAuth } from "./utils/auth";
-import { connectSocket } from "./socket";
+import { SocketProvider } from "./context/SocketContext";
 
 // 🔁 Role → Route mapping
 const getRedirectPath = (role) => {
@@ -92,8 +92,8 @@ const PatrolPage = () => (
       </div>
     </div>
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h3 className="text-lg font-bold text-slate-700 mb-4">Live SOS Tracking</h3>
-        <LiveMap />
+      <h3 className="text-lg font-bold text-slate-700 mb-4">Live SOS Tracking</h3>
+      <LiveMap />
     </div>
   </div>
 );
@@ -128,68 +128,66 @@ function App() {
   const { token, role } = getAuth();
   const isAuthenticated = !!token && !!role;
 
-  useEffect(() => {
-    if (token) connectSocket(token);
-  }, [token]);
-
   return (
     <Router>
-      <Toaster position="top-right" />
-      <Routes>
+      <SocketProvider>
+        <Toaster position="top-right" />
+        <Routes>
 
-        {/* ✅ ROOT → ALWAYS GO TO LOGIN */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* ✅ ROOT → ALWAYS GO TO LOGIN */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* 🔐 LOGIN */}
-        <Route
-          path="/login"
-          element={
-            isAuthenticated ? (
-              <Navigate to={getRedirectPath(role)} replace />
-            ) : (
-              <Login />
-            )
-          }
-        />
+          {/* 🔐 LOGIN */}
+          <Route
+            path="/login"
+            element={
+              isAuthenticated ? (
+                <Navigate to={getRedirectPath(role)} replace />
+              ) : (
+                <Login />
+              )
+            }
+          />
 
-        {/* 🔐 STUDENT */}
-        <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-          <Route path="/student" element={<StudentLayout />}>
-            <Route index element={<StudentPage />} />
-            <Route path="create-report" element={<CreateReport />} />
-            <Route path="my-reports" element={<MyReports />} />
+          {/* 🔐 STUDENT */}
+          <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+            <Route path="/student" element={<StudentLayout />}>
+              <Route index element={<StudentPage />} />
+              <Route path="create-report" element={<CreateReport />} />
+              <Route path="my-reports" element={<MyReports />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* 🔐 ADMIN */}
-        <Route element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} />}>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminPage />} />
-            <Route path="cases" element={<AdminCases />} />
-            <Route path="cases/:id" element={<CaseDetail />} />
-            <Route path="users" element={<AdminUsers />} />
+          {/* 🔐 ADMIN */}
+          <Route element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminPage />} />
+              <Route path="cases" element={<AdminCases />} />
+              <Route path="cases/:id" element={<CaseDetail />} />
+              <Route path="users" element={<AdminUsers />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* 🔐 PATROL */}
-        <Route element={<ProtectedRoute allowedRoles={["patrol"]} />}>
-          <Route path="/patrol" element={<PatrolLayout />}>
-            <Route index element={<PatrolDashboard />} />
+          {/* 🔐 PATROL */}
+          <Route element={<ProtectedRoute allowedRoles={["patrol"]} />}>
+            <Route path="/patrol" element={<PatrolLayout />}>
+              <Route index element={<PatrolDashboard />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* 🔐 SUPER ADMIN */}
-        <Route element={<ProtectedRoute allowedRoles={["super_admin"]} />}>
-          <Route path="/super-admin" element={<SuperAdminLayout />}>
-            <Route index element={<SuperAdminPage />} />
-            <Route path="users" element={<AdminUsers />} />
+          {/* 🔐 SUPER ADMIN */}
+          <Route element={<ProtectedRoute allowedRoles={["super_admin"]} />}>
+            <Route path="/super-admin" element={<SuperAdminLayout />}>
+              <Route index element={<SuperAdminPage />} />
+              <Route path="users" element={<AdminUsers />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* ❌ FALLBACK */}
-        <Route path="*" element={<h1>404 Not Found</h1>} />
+          {/* ❌ FALLBACK */}
+          <Route path="*" element={<h1>404 Not Found</h1>} />
 
-      </Routes>
+        </Routes>
+      </SocketProvider>
     </Router>
   );
 }
