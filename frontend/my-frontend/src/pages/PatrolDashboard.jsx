@@ -1,27 +1,48 @@
 import { useState, useEffect } from "react";
-import api from "../api";
+import { getAllCases } from "../api/caseService";
 import { getAuth } from "../utils/auth";
 import toast from "react-hot-toast";
 import LiveMap from "../components/LiveMap";
+import { useSocket } from "../hooks/useSocket";
+import { 
+    Shield, 
+    Activity, 
+    MapPin, 
+    AlertCircle, 
+    CheckCircle2, 
+    ChevronRight,
+    Loader2
+} from "lucide-react";
 
+/**
+ * @desc Patrol Module: Focus only on cases assigned to the current patrol unit
+ */
 const PatrolDashboard = () => {
     const [assignedCases, setAssignedCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCaseMapId, setSelectedCaseMapId] = useState(null);
+    const auth = getAuth();
+    const socket = useSocket();
 
     const fetchAssignedCases = async () => {
         try {
-            const res = await api.get("/admin/cases");
-            setAssignedCases(res.data.data);
+            const data = await getAllCases();
             
-            // Auto focus map to the first active case
-            const activeCases = res.data.data.filter(c => c.status === "active");
-            if (activeCases.length > 0) {
-                setSelectedCaseMapId(activeCases[0]._id);
+            // 🔍 FILTER: Only show cases where this patrol unit is explicitly assigned
+            const filtered = data.data.filter(c => 
+                c.assignedPatrols?.some(p => p._id === auth?.uid || p === auth?.uid)
+            );
+            
+            setAssignedCases(filtered);
+            
+            // Auto focus map to the first active case if not already selected
+            if (filtered.length > 0 && !selectedCaseMapId) {
+                const firstActive = filtered.find(c => c.status !== "closed") || filtered[0];
+                setSelectedCaseMapId(firstActive._id);
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to load assigned cases");
+            toast.error("Telemetry error: Failed to fetch assignments.");
         } finally {
             setLoading(false);
         }
@@ -29,53 +50,148 @@ const PatrolDashboard = () => {
 
     useEffect(() => {
         fetchAssignedCases();
-    }, []);
 
-    if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Loading Patrol Data...</div>;
+        // 📡 Real-time Sync for Patrol units
+        if (socket) {
+            socket.on("case:update", (data) => {
+                // Refresh if the update involves an assigned case
+                fetchAssignedCases();
+            });
+
+            socket.on("sos:alert", () => {
+                // Patrols should see new SOS alerts if they are potentially involved
+                fetchAssignedCases();
+            });
+        }
+
+        return () => {
+            if (socket) {
+                socket.off("case:update");
+                socket.off("sos:alert");
+            }
+        };
+    }, [socket, auth?.uid]);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 gap-4">
+                <Loader2 className="animate-spin text-slate-900" size={40} />
+                <p className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Loading Response Intelligence...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex flex-col gap-6">
-            <h2 className="text-3xl font-bold text-slate-800">Patrol Output</h2>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                {/* Cases List */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 bg-slate-50">
-                        <h3 className="text-lg font-bold text-slate-800">Assigned Active Cases</h3>
+        <div className="space-y-8 animate-in fade-in duration-1000">
+            {/* Dashboard Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div className="space-y-1">
+                    <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Patrol Intelligence</h2>
+                    <p className="text-slate-500 font-bold flex items-center gap-2">
+                        <Activity size={14} className="text-red-500 animate-pulse" />
+                        Live Field Operations Dashboard
+                    </p>
+                </div>
+                <div className="flex gap-4">
+                    <div className="bg-white border border-slate-200 px-6 py-3 rounded-2xl shadow-sm flex flex-col items-center">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assigned</span>
+                        <span className="text-xl font-black">{assignedCases.length}</span>
                     </div>
-                    <div className="overflow-y-auto max-h-[500px]">
-                        {assignedCases.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500">No active cases assigned to you.</div>
-                        ) : (
-                            <ul className="divide-y divide-slate-100">
-                                {assignedCases.map(c => (
-                                    <li 
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                
+                {/* Cases Navigation List */}
+                <div className="xl:col-span-4 space-y-4">
+                    <div className="bg-slate-900 text-white p-6 rounded-[32px] shadow-2xl shadow-slate-300">
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
+                            <Shield size={14} className="text-red-500" /> Active Assignments
+                        </h3>
+                        
+                        <div className="space-y-3 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
+                            {assignedCases.length === 0 ? (
+                                <div className="py-10 text-center space-y-4">
+                                    <CheckCircle2 size={40} className="mx-auto text-green-500/20" />
+                                    <p className="text-slate-500 text-sm font-bold">No active sector assignments.</p>
+                                </div>
+                            ) : (
+                                assignedCases.map(c => (
+                                    <div 
                                         key={c._id} 
-                                        className={`p-4 transition cursor-pointer hover:bg-slate-50 ${selectedCaseMapId === c._id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
                                         onClick={() => setSelectedCaseMapId(c._id)}
+                                        className={`group relative p-5 rounded-2xl border transition-all cursor-pointer ${
+                                            selectedCaseMapId === c._id 
+                                            ? 'bg-white text-slate-900 border-white shadow-xl translate-x-1' 
+                                            : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'
+                                        }`}
                                     >
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="font-mono text-sm font-bold text-slate-700">{c._id}</span>
-                                            <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${c.status === 'active' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
-                                                {c.status}
+                                        <div className="flex justify-between items-start mb-3">
+                                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                                                selectedCaseMapId === c._id ? 'bg-slate-900 text-white' : 'bg-white/10 text-slate-500'
+                                            }`}>
+                                                {c.type}
                                             </span>
+                                            <div className={`w-2 h-2 rounded-full ${c.status === 'closed' ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}></div>
                                         </div>
-                                        <p className="text-slate-500 text-sm capitalize">Type: {c.type} | Priority: {c.priority}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
+                                        
+                                        <h4 className={`text-sm font-black mb-1 ${selectedCaseMapId === c._id ? 'text-slate-900' : 'text-slate-200'}`}>
+                                            Case #{c._id.substring(c._id.length - 8).toUpperCase()}
+                                        </h4>
+                                        <p className="text-[10px] font-bold uppercase tracking-tighter opacity-70">
+                                            Status: {c.status.replace("_", " ")}
+                                        </p>
+                                        
+                                        <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-opacity ${selectedCaseMapId === c._id ? 'opacity-100' : 'opacity-0'}`}>
+                                            <ChevronRight size={16} />
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Map View */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h3 className="text-lg font-bold text-slate-700 mb-4">
-                        Live Tracking: {selectedCaseMapId ? selectedCaseMapId.substring(0,8) + "..." : "Standby"}
-                    </h3>
-                    {/* The LiveMap is already equipped to listen to the specific case stream */}
-                    <LiveMap key={selectedCaseMapId} activeCaseId={selectedCaseMapId} />
+                {/* Map Integration */}
+                <div className="xl:col-span-8 flex flex-col gap-6">
+                    <div className="bg-white p-2 rounded-[40px] shadow-sm border border-slate-200 h-[600px] relative overflow-hidden group">
+                        <div className="absolute top-6 left-6 z-[1000] flex flex-col gap-2">
+                             <div className="bg-white/90 backdrop-blur-md border border-slate-200 p-4 rounded-2xl shadow-2xl flex items-center gap-4">
+                                <div className="bg-red-500 p-2 rounded-xl text-white shadow-lg shadow-red-200">
+                                    <MapPin size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest leading-none">Sector View</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                                        {selectedCaseMapId ? `Tracking: ${selectedCaseMapId.substring(0,8)}` : "Awaiting Selection"}
+                                    </p>
+                                </div>
+                             </div>
+                        </div>
+
+                        {/* Real-time Map Instance */}
+                        <div className="w-full h-full rounded-[38px] overflow-hidden grayscale-[0.2] contrast-[1.1]">
+                            <LiveMap key={selectedCaseMapId} activeCaseId={selectedCaseMapId} />
+                        </div>
+                    </div>
+
+                    {/* Quick Case Info (Bottom Sheet Style) */}
+                    {selectedCaseMapId && (
+                        <div className="bg-white p-8 rounded-[32px] border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-8">
+                             <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Payload</span>
+                                <p className="text-lg font-black text-slate-900 font-mono">#{selectedCaseMapId.substring(selectedCaseMapId.length - 12).toUpperCase()}</p>
+                             </div>
+                             <div className="space-y-4 md:col-span-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <AlertCircle size={12} /> Narrative Summary
+                                </span>
+                                <p className="text-sm font-bold text-slate-600 leading-relaxed italic">
+                                    "No detailed narrative currently available for this field log. Refer to dispatch for secondary details."
+                                </p>
+                             </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

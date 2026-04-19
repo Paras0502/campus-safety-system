@@ -1,9 +1,23 @@
 import { useEffect, useState } from "react";
-import axiosInstance from "../api/axiosInstance";
-import { Clock, MapPin, ShieldAlert, Loader2, Info, CheckCircle2, Search, FileText, AlertCircle } from "lucide-react";
-import { useSocket } from "../context/SocketContext";
+import { getMyReports } from "../api/reportService";
+import { useSocket } from "../hooks/useSocket";
 import { getAuth } from "../utils/auth";
+import { 
+    Clock, 
+    MapPin, 
+    ShieldAlert, 
+    Loader2, 
+    Info, 
+    CheckCircle2, 
+    Search, 
+    FileText, 
+    AlertCircle,
+    ArrowRight
+} from "lucide-react";
 
+/**
+ * @desc Student Dashboard: Track self-submitted reports and their real-time status
+ */
 const MyReports = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,11 +27,11 @@ const MyReports = () => {
 
     const fetchReports = async () => {
         try {
-            const res = await axiosInstance.get("/reports/my");
-            setReports(res.data);
+            const data = await getMyReports();
+            setReports(data || []);
         } catch (err) {
             console.error(err);
-            setError("Failed to fetch reports");
+            setError("Connectivity issue: Could not fetch report history.");
         } finally {
             setLoading(false);
         }
@@ -26,11 +40,11 @@ const MyReports = () => {
     useEffect(() => {
         fetchReports();
 
-        // 📡 Listen for status updates in real-time
+        // 📡 Real-time Sync (Phase 8 Objective)
         if (socket) {
             socket.on("case:update", (data) => {
-                // If the update is for this student's report, refresh the list
-                if (data.studentId === auth?.user?._id) {
+                // If the update involves this specific student's report
+                if (data.studentId === auth?.uid) {
                     fetchReports();
                 }
             });
@@ -39,132 +53,161 @@ const MyReports = () => {
         return () => {
             if (socket) socket.off("case:update");
         };
-    }, [socket]);
+    }, [socket, auth?.uid]);
 
     const getStatusStyle = (status) => {
         switch (status?.toLowerCase()) {
             case "closed":
                 return { 
-                    bg: "bg-green-50 text-green-700 border-green-200", 
-                    label: "Closed / Resolved",
-                    icon: <CheckCircle2 size={14} />
+                    bg: "bg-green-100 text-green-800 border-green-200", 
+                    label: "Case Closed",
+                    icon: <CheckCircle2 size={12} />,
+                    progress: 100
                 };
             case "action_taken":
                 return { 
-                    bg: "bg-blue-50 text-blue-700 border-blue-200", 
+                    bg: "bg-blue-100 text-blue-800 border-blue-200", 
                     label: "Action Taken",
-                    icon: <AlertCircle size={14} />
+                    icon: <ShieldAlert size={12} />,
+                    progress: 80
                 };
             case "investigating":
                 return { 
-                    bg: "bg-purple-50 text-purple-700 border-purple-200", 
+                    bg: "bg-purple-100 text-purple-800 border-purple-200", 
                     label: "Investigating",
-                    icon: <Search size={14} />
+                    icon: <Search size={12} />,
+                    progress: 60
                 };
             case "under_review":
                 return { 
-                    bg: "bg-amber-50 text-amber-700 border-amber-200", 
+                    bg: "bg-amber-100 text-amber-800 border-amber-200", 
                     label: "Under Review",
-                    icon: <FileText size={14} />
+                    icon: <FileText size={12} />,
+                    progress: 40
                 };
             case "submitted":
                 return { 
-                    bg: "bg-slate-50 text-slate-600 border-slate-200", 
+                    bg: "bg-slate-100 text-slate-700 border-slate-200", 
                     label: "Submitted",
-                    icon: <Clock size={14} />
+                    icon: <Clock size={12} />,
+                    progress: 20
                 };
             default:
                 return { 
                     bg: "bg-slate-50 text-slate-500 border-slate-100", 
                     label: status || "Pending",
-                    icon: <Clock size={14} />
+                    icon: <Clock size={12} />,
+                    progress: 0
                 };
         }
     };
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 text-slate-500">
-                <Loader2 className="animate-spin w-10 h-10 mb-4 text-red-500" />
-                <p className="font-medium">Syncing your reports...</p>
+            <div className="flex flex-col items-center justify-center p-20 text-slate-500 gap-4">
+                <Loader2 className="animate-spin text-red-600" size={40} />
+                <p className="font-black uppercase tracking-widest text-xs">Accessing Secure Records...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="bg-red-50 border border-red-200 p-6 rounded-xl text-center max-w-2xl mx-auto mt-8">
-                <ShieldAlert className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-red-800 mb-2">Notice</h3>
-                <p className="text-red-600">{error}</p>
+            <div className="max-w-2xl mx-auto mt-20 p-10 bg-white rounded-[32px] border border-red-100 shadow-2xl shadow-red-50 text-center">
+                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
+                <h3 className="text-2xl font-black text-slate-800 mb-2">System Error</h3>
+                <p className="text-slate-500 font-medium mb-8">{error}</p>
+                <button onClick={fetchReports} className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-600 transition-all">
+                    Retry Connection
+                </button>
             </div>
         );
     }
 
     return (
-        <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h2 className="text-3xl font-black text-slate-800 tracking-tight">My Safety Reports</h2>
-                    <p className="text-slate-500 mt-1 font-medium">Real-time status of your active and past submissions.</p>
+        <div className="max-w-7xl mx-auto space-y-10">
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-2">
+                    <h2 className="text-5xl font-black text-slate-900 tracking-tighter">My Activity</h2>
+                    <p className="text-slate-500 font-bold flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        Live status monitoring for your reported incidents.
+                    </p>
                 </div>
-                <div className="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-4">
+                <div className="bg-slate-900 p-8 rounded-[32px] text-white flex items-center gap-8 shadow-2xl shadow-slate-200 border border-white/5">
                     <div className="flex flex-col">
-                        <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none">Submissions</span>
-                        <span className="text-2xl font-black">{reports.length}</span>
-                    </div>
-                    <div className="w-px h-8 bg-slate-700"></div>
-                    <div className="bg-green-500/20 p-2 rounded-lg">
-                        <ShieldAlert className="w-5 h-5 text-green-400" />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Logs</span>
+                        <span className="text-4xl font-black tabular-nums">{reports.length}</span>
                     </div>
                 </div>
             </div>
 
+            {/* Content Area */}
             {reports.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-slate-200 p-20 rounded-3xl flex flex-col items-center justify-center text-center">
-                    <div className="bg-slate-100 p-6 rounded-full mb-6">
-                        <Info className="w-10 h-10 text-slate-400" />
+                <div className="bg-white border-4 border-dashed border-slate-100 p-32 rounded-[48px] flex flex-col items-center justify-center text-center">
+                    <div className="bg-slate-50 p-10 rounded-full mb-8">
+                        <Info className="w-16 h-16 text-slate-200" />
                     </div>
-                    <h3 className="text-2xl font-bold text-slate-800 mb-2">No Reports Yet</h3>
-                    <p className="text-slate-500 max-w-md font-medium">Your reported incidents will appear here once you file them using the SOS button or Report Form.</p>
+                    <h3 className="text-3xl font-black text-slate-800 mb-4 tracking-tight">Everything is Quiet</h3>
+                    <p className="text-slate-400 max-w-md font-bold text-sm leading-relaxed">
+                        You haven't submitted any incident reports. If you find yourself in an unsafe situation, use the emergency SOS immediately.
+                    </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                     {reports.map((report) => {
                         const style = getStatusStyle(report.status);
                         return (
-                            <div key={report._id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border-b-4 border-b-slate-100">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className="bg-red-50 p-2 rounded-lg">
-                                        <AlertCircle className="w-5 h-5 text-red-600" />
+                            <div key={report._id} className="group bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col h-full border-b-8 border-b-slate-50 overflow-hidden relative">
+                                {/* Status Indicator Layer */}
+                                <div className="flex justify-between items-start mb-8">
+                                    <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg shadow-slate-100">
+                                        <AlertTriangle size={18} className="text-red-500" />
                                     </div>
-                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${style.bg} font-black text-[10px] uppercase tracking-wider`}>
+                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${style.bg} font-black text-[10px] uppercase tracking-widest shadow-sm`}>
                                         {style.icon}
                                         {style.label}
                                     </div>
                                 </div>
                                 
-                                <h3 className="text-xl font-black text-slate-900 mb-2 leading-tight">
-                                    {report.incidentType || "Anonymous Report"}
+                                <h3 className="text-2xl font-black text-slate-900 mb-2 leading-tight tracking-tight">
+                                    {report.incidentType || "Anonymous Log"}
                                 </h3>
                                 
-                                <p className="text-slate-500 text-sm mb-8 flex-grow font-medium leading-relaxed">
+                                <p className="text-slate-500 text-sm mb-10 flex-grow font-bold leading-relaxed line-clamp-4">
                                     {report.description}
                                 </p>
                                 
-                                <div className="space-y-4 pt-6 border-t border-slate-50">
-                                    <div className="flex items-center gap-3 text-xs text-slate-500 font-bold">
-                                        <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center">
-                                            <MapPin size={14} className="text-slate-400" />
+                                <div className="space-y-6 pt-8 border-t border-slate-50">
+                                    {/* Progress Bar */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                            <span>Workflow Recovery</span>
+                                            <span>{style.progress}%</span>
                                         </div>
-                                        <span className="truncate italic">{report.location?.address || "Location Pending"}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-xs text-slate-400 font-bold">
-                                        <div className="w-7 h-7 bg-slate-50 rounded-full flex items-center justify-center">
-                                            <Clock size={14} className="text-slate-300" />
+                                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-slate-900 transition-all duration-1000 ease-out"
+                                                style={{ width: `${style.progress}%` }}
+                                            ></div>
                                         </div>
-                                        <span>{new Date(report.createdAt).toLocaleDateString()} at {new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
+
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-2 text-xs text-slate-500 font-black uppercase tracking-tighter">
+                                            <MapPin size={14} className="text-slate-300" />
+                                            <span className="truncate">{report.location?.address || "Coordinates Logged"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                            <Clock size={12} className="text-slate-200" />
+                                            <span>{new Date(report.createdAt).toLocaleDateString()} at {new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                    </div>
+
+                                    <button className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-[20px] bg-slate-50 text-slate-400 font-black text-[10px] uppercase tracking-widest group-hover:bg-red-50 group-hover:text-red-600 transition-all">
+                                        View Log Details <ArrowRight size={14} />
+                                    </button>
                                 </div>
                             </div>
                         );
