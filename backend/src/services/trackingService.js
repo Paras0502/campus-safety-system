@@ -1,7 +1,21 @@
 import Location from "../models/Location.js";
+import { getIO } from "../config/socket.js";
 
 // Stores last saved timestamps to throttle DB writes
 const lastSavedLocationMap = new Map();
+
+export const emitLocation = async (socket, data) => {
+    const { caseId, lat, lng } = data;
+    
+    // Broadcast directly to the case room
+    const io = getIO();
+    io.to(`case:${caseId}`).emit("location:stream", {
+        caseId,
+        userId: socket.user.id,
+        lat,
+        lng,
+    });
+};
 
 export const saveLocationService = async (userId, caseId, lat, lng, throttleSeconds = 0) => {
     const key = `${userId}_${caseId}`;

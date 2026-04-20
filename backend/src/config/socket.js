@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-import { saveLocationService } from "../services/trackingService.js";
+import { saveLocationService, emitLocation } from "../services/trackingService.js";
 import { triggerSOSService } from "../services/sosService.js";
 
 let io;
@@ -68,8 +68,6 @@ export const initIO = (server) => {
          * 📍 LOCATION UPDATE (Client → Server)
          */
         socket.on("location:update", async (data) => {
-            // Uncomment to debug stream: console.log("📍 LOCATION UPDATE RECEIVED:", data);
-
             try {
                 const { caseId, lat, lng } = data;
 
@@ -81,18 +79,12 @@ export const initIO = (server) => {
                 /**
                  * 📡 REAL-TIME BROADCAST (Server → Clients)
                  */
-                // Send stream directly to assigned patrols/admins via rooms instead of global!
-                io.to("admin").to("patrol").to(caseId).emit("location:stream", {
-                    caseId,
-                    userId: socket.user.id,
-                    lat,
-                    lng,
-                });
+                await emitLocation(socket, data);
 
                 /**
                  * 💾 THROTTLED DB STORAGE via trackingService
                  */
-                await saveLocationService(socket.user.id, caseId, lat, lng, 5); // 5 sec throttle
+                await saveLocationService(socket.user.id, caseId, lat, lng, 3); // 3 sec throttle performance rule
 
             } catch (error) {
                 console.error("❌ Location socket error:", error);
@@ -104,8 +96,8 @@ export const initIO = (server) => {
          */
         socket.on("case:join", (caseId) => {
              if (caseId) {
-                 socket.join(caseId);
-                 console.log(`👤 User ${socket.user.id} joined case room: ${caseId}`);
+                 socket.join(`case:${caseId}`);
+                 console.log(`👤 User ${socket.user.id} joined case room: case:${caseId}`);
              }
         });
 

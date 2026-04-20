@@ -57,7 +57,7 @@ export const updateCaseStatusWithWorkflow = async (caseId, newStatus, userRole) 
     // 4. Real-time Emit (Socket.IO)
     try {
         const io = getIO();
-        io.emit("case:update", {
+        io.to("admin").to(`case:${caseItem._id}`).emit("case:update", {
             caseId: caseItem._id,
             status: newStatus,
             reportId: caseItem.reportId?._id,
@@ -77,7 +77,7 @@ export const updateCaseStatusWithWorkflow = async (caseId, newStatus, userRole) 
 export const handleAssignmentUpdate = async (caseItem) => {
     try {
         const io = getIO();
-        io.emit("case:update", {
+        io.to("admin").to(`case:${caseItem._id}`).emit("case:update", {
             caseId: caseItem._id,
             status: caseItem.status,
             assignedPatrols: caseItem.assignedPatrols,

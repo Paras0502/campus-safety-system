@@ -33,12 +33,14 @@ export const triggerSOSService = async (user, location) => {
     // 4. Emit Event to Admins and Patrols
     try {
         const io = getIO();
-        io.to("admin").to("patrol").emit("sos:alert", {
+        const payload = {
             uid: user.uid,
             location,
             caseId: newCase._id,
-            sosId: sosEvent._id
-        });
+            sosId: sosEvent._id,
+            timestamp: new Date()
+        };
+        io.to("admin").to("patrol").emit("sos:alert", payload);
     } catch (error) {
         console.warn("⚠️ Socket not initialized for sos:alert emit.");
     }
@@ -63,6 +65,17 @@ export const resolveSOSService = async (id) => {
     await Case.findByIdAndUpdate(sos.caseId, {
         status: "closed",
     });
+
+    // 3. Emit case update
+    try {
+        const io = getIO();
+        io.to("admin").to(`case:${sos.caseId}`).emit("case:update", {
+            caseId: sos.caseId,
+            status: "closed",
+        });
+    } catch (e) {
+         console.warn("⚠️ Socket notification skipped: IO not initialized.");
+    }
 
     return sos;
 };

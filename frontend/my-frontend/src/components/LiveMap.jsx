@@ -50,40 +50,38 @@ const LiveMap = ({ initialLocation, activeCaseId }) => {
     }, [caseId, socket]);
 
     /**
-     * 📍 SEND LOCATION (REAL GPS)
+     * 📍 SEND LOCATION (REAL GPS using 3 sec interval)
      */
     useEffect(() => {
-        if (!navigator.geolocation) {
-            console.error("Geolocation not supported");
+        if (!navigator.geolocation || !caseId) {
+            console.error("Geolocation not supported or missing caseId");
             return;
         }
 
-        const watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
+        const intervalId = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
 
-                console.log("📍 SENDING LOCATION:", latitude, longitude);
+                    // console.log("📍 SENDING LOCATION:", latitude, longitude);
 
-                socket.emit("location:update", {
-                    caseId,
-                    lat: latitude,
-                    lng: longitude,
-                });
-            },
-            (error) => {
-                console.error("Geolocation error:", error);
-            },
-            {
-                enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 5000,
-            }
-        );
+                    socket.emit("location:update", {
+                        caseId,
+                        lat: latitude,
+                        lng: longitude,
+                    });
+                },
+                (error) => {
+                    console.error("Geolocation error:", error);
+                },
+                { enableHighAccuracy: true }
+            );
+        }, 3000);
 
         return () => {
-            navigator.geolocation.clearWatch(watchId);
+            clearInterval(intervalId);
         };
-    }, []);
+    }, [caseId]);
 
     return (
         <div className="w-full h-[500px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative z-0">

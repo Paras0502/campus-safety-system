@@ -32,25 +32,27 @@ const SOSButton = () => {
 
                     const res = await triggerSOS(location);
                     const caseId = res.data.caseId;
-                    
+
                     toast.success("🚨 Emergency SOS Triggered!");
 
-                    // Start streaming location for live tracking
-                    const id = navigator.geolocation.watchPosition(
-                        (pos) => {
-                            if (socket) {
-                                socket.emit("location:update", {
-                                    caseId,
-                                    lat: pos.coords.latitude,
-                                    lng: pos.coords.longitude,
-                                });
-                            }
-                        },
-                        (err) => console.error("Tracking Error:", err),
-                        { enableHighAccuracy: true, maximumAge: 0 }
-                    );
+                    // Start streaming location for live tracking (every 3 seconds)
+                    const intervalId = setInterval(() => {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                if (socket) {
+                                    socket.emit("location:update", {
+                                        caseId,
+                                        lat: pos.coords.latitude,
+                                        lng: pos.coords.longitude,
+                                    });
+                                }
+                            },
+                            (err) => console.error("Tracking Error:", err),
+                            { enableHighAccuracy: true }
+                        );
+                    }, 3000);
 
-                    setTrackingId(id);
+                    setTrackingId(intervalId); // Will clear interval later on resolve
                     setShowModal(false);
                     setLoading(false);
                 },
@@ -71,6 +73,13 @@ const SOSButton = () => {
             setShowModal(false);
         }
     };
+
+    // Cleanup interval on unmount
+    useEffect(() => {
+        return () => {
+            if (trackingId) clearInterval(trackingId);
+        };
+    }, [trackingId]);
 
     return (
         <>
