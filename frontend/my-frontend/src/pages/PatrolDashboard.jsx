@@ -58,8 +58,9 @@ const PatrolDashboard = () => {
                 fetchAssignedCases();
             });
 
-            socket.on("sos:alert", () => {
+            socket.on("sos:alert", (data) => {
                 // Patrols should see new SOS alerts if they are potentially involved
+                toast.error(`🚨 SOS ALERT IN VICINITY! Case ID: ${data.caseId.substring(0,8)}`, { duration: 6000 });
                 fetchAssignedCases();
             });
         }

@@ -1,4 +1,4 @@
-import Location from "../models/Location.js";
+import { saveLocationService } from "../services/trackingService.js";
 
 // @desc    Store location (fallback API)
 // @route   POST /api/location/update
@@ -15,15 +15,8 @@ export const updateLocation = async (req, res) => {
             });
         }
 
-        const location = await Location.create({
-            userId,
-            caseId,
-            coordinates: {
-                lat,
-                lng,
-            },
-            timestamp: new Date(),
-        });
+        // 0 throttle since this is direct REST API fallback
+        const location = await saveLocationService(userId, caseId, lat, lng, 0);
 
         res.status(201).json({
             success: true,

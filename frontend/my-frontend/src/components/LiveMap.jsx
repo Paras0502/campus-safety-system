@@ -10,7 +10,7 @@ const userIcon = new L.divIcon({
     iconAnchor: [10, 10]
 });
 
-const LiveMap = ({ initialLocation }) => {
+const LiveMap = ({ initialLocation, activeCaseId }) => {
     const [liveLocations, setLiveLocations] = useState({});
 
     const defaultCenter = [28.6139, 77.2090];
@@ -18,22 +18,28 @@ const LiveMap = ({ initialLocation }) => {
         ? [initialLocation.lat, initialLocation.lng]
         : defaultCenter;
 
-    // 🧠 TEMP CASE ID (replace later with real caseId from SOS)
-    const caseId = "TEST_CASE_123";
+    const caseId = activeCaseId; // Replaced TEMP CASE ID
 
     /**
-     * 📡 RECEIVE LIVE STREAM
+     * 📡 RECEIVE LIVE STREAM & JOIN ROOM
      */
     useEffect(() => {
+        if (caseId && socket) {
+            socket.emit("case:join", caseId);
+        }
+
         const handleLocationStream = (data) => {
             console.log("📡 STREAM RECEIVED:", data);
 
-            const { caseId, lat, lng } = data;
+            const { caseId: streamCase, lat, lng, userId } = data;
 
-            setLiveLocations((prev) => ({
-                ...prev,
-                [caseId]: { lat, lng }
-            }));
+            // Only update if it pertains to the active case being viewed
+            if (streamCase === caseId) {
+                setLiveLocations((prev) => ({
+                    ...prev,
+                    [userId]: { lat, lng } // Track by userId so multiple people on same case can be seen
+                }));
+            }
         };
 
         socket.on("location:stream", handleLocationStream);
@@ -41,7 +47,7 @@ const LiveMap = ({ initialLocation }) => {
         return () => {
             socket.off("location:stream", handleLocationStream);
         };
-    }, []);
+    }, [caseId, socket]);
 
     /**
      * 📍 SEND LOCATION (REAL GPS)
@@ -101,16 +107,16 @@ const LiveMap = ({ initialLocation }) => {
                     </Marker>
                 )}
 
-                {Object.entries(liveLocations).map(([caseId, loc]) => (
+                {Object.entries(liveLocations).map(([userId, loc]) => (
                     <Marker
-                        key={caseId}
+                        key={userId}
                         position={[loc.lat, loc.lng]}
                         icon={userIcon}
                     >
                         <Popup>
                             <strong>Live Tracking</strong>
                             <br />
-                            Case: {caseId.substring(0, 8)}...
+                            User: {userId.substring(0, 8)}...
                         </Popup>
                     </Marker>
                 ))}

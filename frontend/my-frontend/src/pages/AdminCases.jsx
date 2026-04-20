@@ -39,7 +39,8 @@ const AdminCases = () => {
             });
 
             // Listen for new SOS alerts (if we want to refresh list)
-            socket.on("sos:alert", () => {
+            socket.on("sos:alert", (data) => {
+                toast.error(`🚨 EMERGENCY SOS TRIGGERED! Case ID: ${data.caseId.substring(0,8)}`, { duration: 6000 });
                 fetchCases();
             });
         }

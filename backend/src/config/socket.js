@@ -1,11 +1,9 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-import Location from "../models/Location.js";
+import { saveLocationService } from "../services/trackingService.js";
+import { triggerSOSService } from "../services/sosService.js";
 
 let io;
-
-// 🧠 In-memory tracker for throttling DB writes
-const lastSavedLocation = new Map();
 
 export const initIO = (server) => {
     io = new Server(server, {
@@ -28,7 +26,7 @@ export const initIO = (server) => {
             }
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.user = decoded;
+            socket.user = decoded; // Contains id, uid, role
 
             next();
         } catch (err) {
@@ -41,13 +39,36 @@ export const initIO = (server) => {
      * ⚡ Connection Handler
      */
     io.on("connection", (socket) => {
-        console.log("🔥 SOCKET CONNECTED:", socket.user?.id);
+        console.log(`🔥 SOCKET CONNECTED: ${socket.user?.id} (Role: ${socket.user?.role})`);
+
+        // ✅ JOIN ROOMS
+        if (socket.user?.role) {
+            socket.join(socket.user.role);
+        }
+        socket.join(`user:${socket.user.id}`);
+
+        /**
+         * 🚨 SOS TRIGGER (Client → Server WS path)
+         * Allows triggering an SOS event entirely through WS instead of HTTP if desired
+         */
+        socket.on("sos:trigger", async (data) => {
+            console.log("🚨 SOS TRIGGER RECEIVED OVER SOCKET:", data);
+            try {
+                const { location } = data;
+                if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+                     return;
+                }
+                await triggerSOSService(socket.user, location);
+            } catch (error) {
+                console.error("❌ socket.on('sos:trigger') error:", error);
+            }
+        });
 
         /**
          * 📍 LOCATION UPDATE (Client → Server)
          */
         socket.on("location:update", async (data) => {
-            console.log("📍 LOCATION UPDATE RECEIVED:", data);
+            // Uncomment to debug stream: console.log("📍 LOCATION UPDATE RECEIVED:", data);
 
             try {
                 const { caseId, lat, lng } = data;
@@ -60,42 +81,32 @@ export const initIO = (server) => {
                 /**
                  * 📡 REAL-TIME BROADCAST (Server → Clients)
                  */
-                console.log("📡 BROADCASTING location:stream");
-
-                io.emit("location:stream", {
+                // Send stream directly to assigned patrols/admins via rooms instead of global!
+                io.to("admin").to("patrol").to(caseId).emit("location:stream", {
                     caseId,
+                    userId: socket.user.id,
                     lat,
                     lng,
                 });
 
                 /**
-                 * 💾 THROTTLED DB STORAGE
+                 * 💾 THROTTLED DB STORAGE via trackingService
                  */
-                const key = `${socket.user.id}_${caseId}`;
-                const now = Date.now();
-
-                const lastSaved = lastSavedLocation.get(key) || 0;
-
-                // Save every 5 seconds
-                if (now - lastSaved > 5000) {
-                    console.log("💾 SAVING LOCATION TO DB");
-
-                    await Location.create({
-                        userId: socket.user.id,
-                        caseId,
-                        coordinates: {
-                            lat,
-                            lng,
-                        },
-                        timestamp: new Date(),
-                    });
-
-                    lastSavedLocation.set(key, now);
-                }
+                await saveLocationService(socket.user.id, caseId, lat, lng, 5); // 5 sec throttle
 
             } catch (error) {
                 console.error("❌ Location socket error:", error);
             }
+        });
+
+        /**
+         * 🤝 JOIN CASE ROOM (Client requests to subscribe to a specific case)
+         */
+        socket.on("case:join", (caseId) => {
+             if (caseId) {
+                 socket.join(caseId);
+                 console.log(`👤 User ${socket.user.id} joined case room: ${caseId}`);
+             }
         });
 
         /**

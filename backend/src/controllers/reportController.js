@@ -1,4 +1,9 @@
-import Report from "../models/Report.js";
+import {
+    createReportService,
+    getMyReportsService,
+    getReportByIdService,
+    updateReportStatusService,
+} from "../services/reportService.js";
 
 // ✅ Create Report
 export const createReport = async (req, res) => {
@@ -11,14 +16,14 @@ export const createReport = async (req, res) => {
             });
         }
 
-        const report = await Report.create({
-            userId: req.user._id,
-            uid: req.user.uid,
+        const report = await createReportService(
+            req.user._id,
+            req.user.uid,
             description,
             incidentType,
             location,
-            evidence: evidence || [],
-        });
+            evidence
+        );
 
         res.status(201).json({
             message: "Report submitted successfully",
@@ -33,10 +38,7 @@ export const createReport = async (req, res) => {
 // ✅ Get My Reports
 export const getMyReports = async (req, res) => {
     try {
-        const reports = await Report.find({ userId: req.user._id }).sort({
-            createdAt: -1,
-        });
-
+        const reports = await getMyReportsService(req.user._id);
         res.status(200).json(reports);
     } catch (error) {
         console.error("Get My Reports Error:", error.message);
@@ -47,10 +49,7 @@ export const getMyReports = async (req, res) => {
 // ✅ Get Report by ID
 export const getReportById = async (req, res) => {
     try {
-        const report = await Report.findById(req.params.id).populate(
-            "assignedTo",
-            "uid role"
-        );
+        const report = await getReportByIdService(req.params.id);
 
         if (!report) {
             return res.status(404).json({ message: "Report not found" });
@@ -68,16 +67,7 @@ export const updateReportStatus = async (req, res) => {
     try {
         const { status, assignedTo } = req.body;
 
-        const report = await Report.findById(req.params.id);
-
-        if (!report) {
-            return res.status(404).json({ message: "Report not found" });
-        }
-
-        if (status) report.status = status;
-        if (assignedTo) report.assignedTo = assignedTo;
-
-        await report.save();
+        const report = await updateReportStatusService(req.params.id, status, assignedTo);
 
         res.status(200).json({
             message: "Report updated successfully",
@@ -85,6 +75,9 @@ export const updateReportStatus = async (req, res) => {
         });
     } catch (error) {
         console.error("Update Report Error:", error.message);
+        if (error.message === "Report not found") {
+            return res.status(404).json({ message: "Report not found" });
+        }
         res.status(500).json({ message: "Server error while updating report" });
     }
 };
