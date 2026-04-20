@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import { setAuth } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import { connectSocket } from "../socket";
@@ -18,14 +18,10 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post(
-                "http://localhost:5000/api/auth/login",
-                {
-                    email,
-                    password,
-                },
-                { withCredentials: true }
-            );
+            const res = await axiosInstance.post("/auth/login", {
+                email,
+                password,
+            });
 
             // ✅ Store auth
             setAuth(res.data.data);

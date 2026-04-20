@@ -4,6 +4,7 @@ let socket = null;
 
 /**
  * 🔌 Get or create socket instance (singleton)
+ * Returns the current socket, or creates a new one lazily.
  */
 export const getSocket = () => {
     if (!socket) {
@@ -18,8 +19,11 @@ export const getSocket = () => {
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
 
-            // Optional tuning
+            // Prefer WebSocket transport
             transports: ["websocket"],
+
+            // Don't auto-connect — we connect manually via connectSocket()
+            autoConnect: false,
         });
 
         /**
@@ -39,4 +43,32 @@ export const getSocket = () => {
     }
 
     return socket;
+};
+
+/**
+ * 🔌 Initialize and connect the socket with a given JWT token.
+ * Call this once after a successful login.
+ * @param {string} token - JWT access token
+ */
+export const connectSocket = (token) => {
+    const s = getSocket();
+
+    // Update the auth token before connecting
+    s.auth = { token };
+
+    if (!s.connected) {
+        s.connect();
+        console.log("🔌 Socket connecting with fresh token...");
+    }
+};
+
+/**
+ * 🔌 Disconnect and destroy the socket instance (call on logout)
+ */
+export const disconnectSocket = () => {
+    if (socket) {
+        socket.disconnect();
+        socket = null;
+        console.log("🔌 Socket disconnected and cleared.");
+    }
 };

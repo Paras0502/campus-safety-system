@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import SOSButton from "../components/SOSButton";
-import socket from "../socket";
+import { getSocket } from "../socket";
 import { getAuth } from "../utils/auth";
 import toast from "react-hot-toast";
 import { LogOut } from "lucide-react";
@@ -11,6 +11,7 @@ const StudentLayout = () => {
     const { uid } = getAuth();
 
     useEffect(() => {
+        const socket = getSocket();
         socket.on("sos:alert", (data) => {
             console.log("🚨 SOS Alert Received:", data);
             toast.error(`🚨 SOS Alert from User: ${data.uid}`, { duration: 5000 });
@@ -61,7 +62,7 @@ const StudentLayout = () => {
                                 UID: {uid || "Unknown"}
                             </span>
                         </div>
-                        <button 
+                        <button
                             onClick={handleLogout}
                             className="flex items-center gap-2 text-sm font-semibold text-slate-600 border border-slate-200 px-4 py-2 rounded shadow-sm hover:bg-slate-50 hover:text-red-600 hover:border-red-200 transition"
                         >

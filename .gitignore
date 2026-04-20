@@ -42,6 +42,7 @@ backend/test-results/
 backend/logs/
 backend/dist/
 backend/build/
+backend/.env
 
 # ==============================================================================
 # Frontend Specific (/frontend/my-frontend)
@@ -51,6 +52,8 @@ frontend/my-frontend/dist-ssr/
 frontend/my-frontend/coverage/
 frontend/my-frontend/build/
 frontend/my-frontend/.eslintcache
+frontend/my-frontend/.env
+frontend/my-frontend/.env.local
 
 # ==============================================================================
 # IDEs and Editors
@@ -85,3 +88,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 debug.log
 *.bak
 *.tmp
+PARASwalkthrough.md

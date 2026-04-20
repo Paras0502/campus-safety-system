@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMyReports } from "../api/reportService";
-import { useSocket } from "../hooks/useSocket";
+import { useSocket } from "../context/SocketContext";
 import { getAuth } from "../utils/auth";
 import { 
     Clock, 

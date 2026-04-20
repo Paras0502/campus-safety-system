@@ -43,10 +43,10 @@ const CreateReport = () => {
             await createReport(formData);
 
             toast.success("Report submitted successfully! Security has been notified.");
-            
+
             // Redirect to My Reports to see the status
             setTimeout(() => {
-                navigate("/student/reports");
+                navigate("/student/my-reports");
             }, 1500);
 
             // Reset form

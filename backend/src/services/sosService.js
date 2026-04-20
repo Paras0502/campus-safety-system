@@ -39,7 +39,7 @@ export const triggerSOSService = async (user, location) => {
          */
         const newCase = await Case.create({
             type: "sos",
-            status: "active",
+            status: "investigating", // ✅ FIXED
             priority: "critical",
             assignedAdmins: [],
             assignedPatrols: [],
@@ -52,7 +52,7 @@ export const triggerSOSService = async (user, location) => {
             userId,
             uid: user.uid,
             caseId: newCase._id,
-            status: "active",
+            status: "active", // This is fine (SOS schema allows it)
             triggeredAt: new Date(),
         });
 
@@ -80,7 +80,7 @@ export const triggerSOSService = async (user, location) => {
          * 🔄 Sync case creation
          */
         emitCaseUpdate(newCase._id, {
-            status: "active",
+            status: "investigating", // ✅ FIXED
             type: "sos",
         });
 

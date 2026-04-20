@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import socket from "../socket";
+import { getSocket } from "../socket";
 import { getAuth } from "../utils/auth";
 import toast from "react-hot-toast";
 import { LogOut, ShieldAlert } from "lucide-react";
@@ -10,6 +10,7 @@ const AdminLayout = () => {
     const { uid } = getAuth();
 
     useEffect(() => {
+        const socket = getSocket();
         socket.on("sos:alert", (data) => {
             toast.error(`🚨 EMERGENCY SOS from User: ${data.uid}`, { duration: 10000 });
         });
@@ -59,7 +60,7 @@ const AdminLayout = () => {
                                 UID: {uid || "Unknown"}
                             </span>
                         </div>
-                        <button 
+                        <button
                             onClick={handleLogout}
                             className="flex items-center gap-2 text-sm font-semibold text-slate-600 border border-slate-200 px-4 py-2 rounded shadow-sm hover:bg-slate-50 hover:text-red-600 hover:border-red-200 transition"
                         >

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCaseById, updateCaseStatus, assignCase } from "../api/caseService";
-import { useSocket } from "../hooks/useSocket";
+import { useSocket } from "../context/SocketContext";
 import toast from "react-hot-toast";
 import {
     Clock,

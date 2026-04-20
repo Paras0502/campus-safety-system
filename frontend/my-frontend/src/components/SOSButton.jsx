@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { triggerSOS } from "../api/sosService";
-import { useSocket } from "../hooks/useSocket";
+import { useSocket } from "../context/SocketContext";
 import { AlertTriangle, Loader2, Shield } from "lucide-react";
 
 /**
