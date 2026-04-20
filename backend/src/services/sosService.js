@@ -41,6 +41,7 @@ export const triggerSOSService = async (user, location) => {
             timestamp: new Date()
         };
         io.to("admin").to("patrol").emit("sos:alert", payload);
+        console.log("🚨 [EMERGENCY] Broadcasting SOS alert to Admin & Patrol rooms:", payload);
     } catch (error) {
         console.warn("⚠️ Socket not initialized for sos:alert emit.");
     }
@@ -74,7 +75,7 @@ export const resolveSOSService = async (id) => {
             status: "closed",
         });
     } catch (e) {
-         console.warn("⚠️ Socket notification skipped: IO not initialized.");
+        console.warn("⚠️ Socket notification skipped: IO not initialized.");
     }
 
     return sos;
