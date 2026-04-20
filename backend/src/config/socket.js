@@ -5,107 +5,144 @@ import { triggerSOSService } from "../services/sosService.js";
 
 let io;
 
+/**
+ * 🔁 Helper: Join base rooms
+ */
+const joinBaseRooms = (socket) => {
+    // User-specific room
+    socket.join(`user:${socket.user.id}`);
+
+    // Role-based rooms
+    if (socket.user.role === "admin") {
+        socket.join("admin");
+    } else if (socket.user.role === "patrol") {
+        socket.join("patrol");
+    }
+};
+
+/**
+ * 🚀 Initialize Socket.IO
+ */
 export const initIO = (server) => {
     io = new Server(server, {
         cors: {
-            origin: "http://localhost:5173", // ✅ FIXED
+            origin: "http://localhost:5173",
             methods: ["GET", "POST", "PATCH"],
         },
     });
 
     /**
-     * 🔐 Socket Authentication Middleware
+     * 🔐 AUTH MIDDLEWARE
      */
     io.use((socket, next) => {
         try {
-            const token = socket.handshake.auth?.token;
+            const token =
+                socket.handshake.auth?.token ||
+                socket.handshake.headers?.authorization?.split(" ")[1];
 
             if (!token) {
-                console.log("❌ No token provided");
-                return next(new Error("Authentication error"));
+                return next(new Error("Authentication error: No token"));
             }
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.user = decoded; // Contains id, uid, role
+
+            if (!decoded?.id || !decoded?.role) {
+                return next(new Error("Authentication error: Invalid payload"));
+            }
+
+            socket.user = {
+                id: decoded.id,
+                role: decoded.role,
+                uid: decoded.uid,
+            };
 
             next();
         } catch (err) {
-            console.log("❌ Token verification failed");
-            next(new Error("Authentication error"));
+            return next(new Error("Authentication error: Invalid token"));
         }
     });
 
     /**
-     * ⚡ Connection Handler
+     * ⚡ CONNECTION HANDLER
      */
     io.on("connection", (socket) => {
-        console.log(`🔥 SOCKET CONNECTED: ${socket.user?.id} (Role: ${socket.user?.role})`);
+        console.log(`🔥 CONNECTED: ${socket.user.id} (${socket.user.role})`);
 
-        // ✅ JOIN ROOMS
-        if (socket.user?.role) {
-            socket.join(socket.user.role);
-        }
-        socket.join(`user:${socket.user.id}`);
+        // Join base rooms
+        joinBaseRooms(socket);
 
         /**
-         * 🚨 SOS TRIGGER (Client → Server WS path)
-         * Allows triggering an SOS event entirely through WS instead of HTTP if desired
+         * 🔄 Rejoin case rooms after reconnect
          */
-        socket.on("sos:trigger", async (data) => {
-            console.log("🚨 SOS TRIGGER RECEIVED OVER SOCKET:", data);
+        socket.on("cases:rejoin", (caseIds = []) => {
+            if (!Array.isArray(caseIds)) return;
+
+            caseIds.forEach((caseId) => {
+                if (caseId) socket.join(`case:${caseId}`);
+            });
+
+            console.log(`🔄 ${socket.user.id} rejoined cases:`, caseIds);
+        });
+
+        /**
+         * 🚨 SOS TRIGGER
+         */
+        socket.on("sos:trigger", async ({ location }) => {
             try {
-                const { location } = data;
-                if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
-                     return;
+                if (socket.user.role !== "student") return;
+
+                if (
+                    !location ||
+                    typeof location.lat !== "number" ||
+                    typeof location.lng !== "number"
+                ) {
+                    return;
                 }
+
                 await triggerSOSService(socket.user, location);
-            } catch (error) {
-                console.error("❌ socket.on('sos:trigger') error:", error);
+            } catch (err) {
+                console.error("❌ SOS socket error:", err.message);
             }
         });
 
         /**
-         * 📍 LOCATION UPDATE (Client → Server)
+         * 📍 LOCATION UPDATE
          */
-        socket.on("location:update", async (data) => {
+        socket.on("location:update", async ({ caseId, lat, lng }) => {
             try {
-                const { caseId, lat, lng } = data;
+                if (!caseId || lat == null || lng == null) return;
 
-                if (!caseId || lat === undefined || lng === undefined) {
-                    console.log("❌ INVALID LOCATION DATA");
-                    return;
-                }
+                if (!["student", "patrol"].includes(socket.user.role)) return;
 
-                /**
-                 * 📡 REAL-TIME BROADCAST (Server → Clients)
-                 */
-                await emitLocation(socket, data);
+                const payload = {
+                    caseId,
+                    lat,
+                    lng,
+                    userId: socket.user.id,
+                    timestamp: Date.now(),
+                };
 
-                /**
-                 * 💾 THROTTLED DB STORAGE via trackingService
-                 */
-                await saveLocationService(socket.user.id, caseId, lat, lng, 3); // 3 sec throttle performance rule
+                // Emit to case room
+                emitLocation(caseId, payload);
 
+                // Save with throttle + jitter control
+                await saveLocationService(
+                    socket.user.id,
+                    caseId,
+                    lat,
+                    lng,
+                    3
+                );
             } catch (error) {
                 console.error("❌ Location socket error:", error);
             }
         });
 
         /**
-         * 🤝 JOIN CASE ROOM (Client requests to subscribe to a specific case)
-         */
-        socket.on("case:join", (caseId) => {
-             if (caseId) {
-                 socket.join(`case:${caseId}`);
-                 console.log(`👤 User ${socket.user.id} joined case room: case:${caseId}`);
-             }
-        });
-
-        /**
-         * ❌ Disconnect
+         * ❌ DISCONNECT
          */
         socket.on("disconnect", () => {
-            console.log("❌ SOCKET DISCONNECTED:", socket.user?.id);
+            console.log(`❌ DISCONNECTED: ${socket.user.id}`);
         });
     });
 
@@ -116,8 +153,6 @@ export const initIO = (server) => {
  * 📡 Get IO Instance
  */
 export const getIO = () => {
-    if (!io) {
-        throw new Error("Socket.IO not initialized!");
-    }
+    if (!io) throw new Error("Socket.IO not initialized!");
     return io;
 };

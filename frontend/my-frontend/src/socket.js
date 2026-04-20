@@ -1,35 +1,42 @@
 import { io } from "socket.io-client";
 
-const getToken = () => {
-    const token = localStorage.getItem("token");
+let socket = null;
 
-    if (!token) {
-        console.warn("⚠️ No token found in localStorage");
+/**
+ * 🔌 Get or create socket instance (singleton)
+ */
+export const getSocket = () => {
+    if (!socket) {
+        socket = io("http://localhost:5000", {
+            auth: {
+                token: localStorage.getItem("token"),
+            },
+
+            // 🔄 Reconnection config
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+
+            // Optional tuning
+            transports: ["websocket"],
+        });
+
+        /**
+         * 🔌 Connection logs (debugging)
+         */
+        socket.on("connect", () => {
+            console.log("🔌 Socket connected:", socket.id);
+        });
+
+        socket.on("disconnect", (reason) => {
+            console.log("❌ Socket disconnected:", reason);
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("❌ Socket connection error:", err.message);
+        });
     }
 
-    return token;
+    return socket;
 };
-
-const socket = io("http://localhost:5000", {
-    transports: ["websocket"],
-    autoConnect: false, // Prevent connecting before token is available
-});
-
-// Helper to manually connect after login or on app load
-export const connectSocket = (token) => {
-    if (!token) return;
-    
-    if (socket.connected) {
-        // Reconnect if token changes
-        if (socket.auth?.token !== token) {
-            socket.disconnect();
-        } else {
-            return;
-        }
-    }
-    
-    socket.auth = { token };
-    socket.connect();
-};
-
-export default socket;
