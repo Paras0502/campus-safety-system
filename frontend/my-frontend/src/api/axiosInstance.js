@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 
 const axiosInstance = axios.create({
     baseURL: "https://campus-safety-system.onrender.com/api",
-    withCredentials: true, // keep this for now
+    withCredentials: false, // keep this for now
 });
 
 // ─────────────────────────────────────────────
