@@ -3,8 +3,8 @@ import { getAuth, setAuth, clearAuth } from "../utils/auth";
 import toast from "react-hot-toast";
 
 const axiosInstance = axios.create({
-    baseURL: "http://localhost:5000/api",
-    withCredentials: true, // Sends refreshToken httpOnly cookie automatically
+    baseURL: "https://campus-safety-system.onrender.com/api",
+    withCredentials: true, // keep this for now
 });
 
 // ─────────────────────────────────────────────
