@@ -14,10 +14,37 @@ const app = express();
 
 import cors from "cors";
 
+import express from "express";
+import cors from "cors";
+
+const app = express();
+
+// 👇 PASTE YOUR CORS CODE RIGHT HERE
+const allowedOrigins = [
+  "https://campus-women-security.netlify.app",
+  "http://localhost:5173"
+];
+
 app.use(cors({
-  origin: true,   // allows dynamic origins (Netlify preview + prod)
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.includes("netlify.app")
+    ) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
 }));
+
+// 👇 keep this AFTER cors
+app.use(express.json());
+
+// routes...
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
