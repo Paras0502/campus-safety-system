@@ -13,7 +13,7 @@ import errorHandler from "./middleware/errorHandler.js";
 const app = express();
 
 app.use(cors({
-    origin: "http://localhost:5173", // Assuming default Vite frontend port
+    origin: "https://69ee4c34e043a463623ad11b--campus-women-security.netlify.app/login",
     credentials: true,
 }));
 app.use(express.json());
