@@ -1,3 +1,3 @@
 [build]
-  command = "cd frontend/my-frontend && npm ci && npm run build"
-  publish = "frontend/my-frontend/dist"
+  command = "npm ci && npm run build"
+  publish = "dist"
