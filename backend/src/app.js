@@ -12,8 +12,14 @@ import errorHandler from "./middleware/errorHandler.js";
 
 const app = express();
 
+const app = express();
+
 app.use(cors({
-    origin: "*",
+  origin: [
+    "https://campus-women-security.netlify.app",
+    "https://69ee4c34e043a463623ad11b--campus-women-security.netlify.app"
+  ],
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
