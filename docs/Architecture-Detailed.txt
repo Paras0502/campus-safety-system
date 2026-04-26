@@ -1,0 +1,158 @@
+# ⚙️ Backend Architecture (Detailed File & Folder Breakdown)
+
+## Project: Campus Women Safety System
+
+---
+
+## 📁 Root Structure
+
+```
+backend/
+├── src/
+├── uploads/
+├── package.json
+└── .env
+```
+
+---
+
+## 📁 src/
+
+```
+src/
+├── config/
+├── controllers/
+├── models/
+├── routes/
+├── middleware/
+├── services/
+├── sockets/
+├── utils/
+├── app.js
+└── server.js
+```
+
+---
+
+## 📁 config/
+
+```
+config/
+├── db.js          # MongoDB connection
+├── socket.js      # Socket setup
+```
+
+---
+
+## 📁 controllers/
+
+```
+controllers/
+├── authController.js
+├── reportController.js
+├── sosController.js
+├── adminController.js
+```
+
+---
+
+## 📁 models/
+
+```
+models/
+├── User.js
+├── Report.js
+├── Case.js
+├── Location.js
+```
+
+---
+
+## 📁 routes/
+
+```
+routes/
+├── authRoutes.js
+├── reportRoutes.js
+├── sosRoutes.js
+├── adminRoutes.js
+```
+
+---
+
+## 📁 middleware/
+
+```
+middleware/
+├── authMiddleware.js
+├── roleMiddleware.js
+├── errorHandler.js
+```
+
+---
+
+## 📁 services/
+
+```
+services/
+├── reportService.js
+├── sosService.js
+├── trackingService.js
+```
+
+---
+
+## 📁 sockets/
+
+```
+sockets/
+├── socketHandler.js
+├── events.js
+```
+
+---
+
+## 📁 utils/
+
+```
+utils/
+├── generateUID.js
+├── constants.js
+```
+
+---
+
+## 🔥 Key File Responsibilities
+
+### server.js
+
+* Starts server
+* Initializes socket server
+
+### app.js
+
+* Express setup
+* Middleware setup
+
+### socketHandler.js
+
+* Handles real-time events
+
+### reportController.js
+
+* Handles report submission
+
+### sosController.js
+
+* Handles SOS logic
+
+---
+
+## ⚡ Real-Time Flow
+
+* SOS event → broadcast to admin + patrol
+* Location updates → streamed via socket
+
+---
+
+## Status: Backend Architecture Finalized

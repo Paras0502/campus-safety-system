@@ -1,0 +1,217 @@
+# 🌐 API Design (Production-Level)
+
+## Project: Campus Women Safety System
+
+---
+
+## 🎯 Overview
+
+This document defines all REST API endpoints and real-time event mappings for the system.
+
+It is aligned with:
+
+* PRD fileciteturn3file1
+* Tech Stack fileciteturn3file0
+* Backend Architecture fileciteturn3file2
+
+---
+
+# 🔐 1. Authentication APIs
+
+## POST /api/auth/register
+
+Create new user
+
+### Request:
+
+```
+{
+  name,
+  email,
+  password
+}
+```
+
+### Response:
+
+```
+{
+  token,
+  role,
+  uid
+}
+```
+
+---
+
+## POST /api/auth/login
+
+### Request:
+
+```
+{
+  email,
+  password
+}
+```
+
+### Response:
+
+```
+{
+  token,
+  role,
+  uid
+}
+```
+
+---
+
+# 📝 2. Report APIs
+
+## POST /api/reports
+
+Create report
+
+### Request:
+
+```
+{
+  description,
+  incidentType,
+  location,
+  evidence[]
+}
+```
+
+---
+
+## GET /api/reports/my
+
+Get user reports
+
+---
+
+## GET /api/reports/:id
+
+Get single report (admin only)
+
+---
+
+## PATCH /api/reports/:id/status
+
+Update status (admin)
+
+### Body:
+
+```
+{
+  status
+}
+```
+
+---
+
+# 🚨 3. SOS APIs
+
+## POST /api/sos/trigger
+
+Creates emergency case
+
+### Response:
+
+```
+{
+  caseId
+}
+```
+
+---
+
+## PATCH /api/sos/:id/resolve
+
+Resolve SOS case
+
+---
+
+# 👮 4. Admin APIs
+
+## GET /api/admin/cases
+
+Fetch all active cases
+
+---
+
+## GET /api/admin/cases/:id
+
+Case details
+
+---
+
+## PATCH /api/admin/cases/:id/assign
+
+Assign patrol/admin
+
+---
+
+## PATCH /api/admin/cases/:id/status
+
+Update case status
+
+---
+
+# 📍 5. Location APIs (Fallback)
+
+## POST /api/location/update
+
+Store location snapshot
+
+---
+
+# ⚡ 6. Socket Events (REAL-TIME CORE)
+
+## Client → Server
+
+### "sos:trigger"
+
+* payload: { uid, location }
+
+### "location:update"
+
+* payload: { caseId, lat, lng }
+
+---
+
+## Server → Client
+
+### "sos:alert"
+
+* sent to admin + patrol
+
+### "location:stream"
+
+* real-time tracking updates
+
+### "case:update"
+
+* status updates
+
+---
+
+# 🔐 7. Security Layer
+
+* JWT required for all routes
+* Role middleware enforced
+* Socket auth via token
+
+---
+
+# ⚠️ Design Notes
+
+* REST for CRUD
+* Socket for real-time
+* Do NOT mix both unnecessarily
+
+---
+
+## Status: API Design Finalized

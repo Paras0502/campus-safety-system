@@ -1,0 +1,206 @@
+# 📄 Product Requirements Document (PRD)
+
+## Project: Campus Women Safety System
+
+---
+
+## 1. Product Overview
+
+A secure, real-time campus safety platform that enables students to report incidents, trigger emergency alerts, and ensure institutional accountability while maintaining strict privacy.
+
+Key pillars:
+
+* Pseudonymous reporting (UID-based identity)
+* Real-time emergency response (SOS)
+* Controlled access for security teams
+* Transparent report tracking
+
+---
+
+## 2. Problem Statement
+
+Existing campus safety systems fail due to:
+
+* Reports not being taken seriously
+* Fear of retaliation among victims
+* Lack of real-time emergency assistance
+* Weak or inconsistent investigation workflows
+* No visibility into report progress
+
+---
+
+## 3. Objectives
+
+* Enable safe and confidential reporting
+* Provide immediate emergency response
+* Ensure structured investigation and accountability
+* Maintain strict privacy and access control
+* Build trust in campus safety infrastructure
+
+---
+
+## 4. User Roles
+
+### 4.1 Student
+
+* Register via university credentials
+* Submit incident reports
+* Trigger SOS alerts
+* View status of their reports
+
+### 4.2 Security Admin
+
+* Access and manage assigned cases
+* View real user identity (restricted)
+* Monitor live incidents
+* Dispatch patrol teams
+
+### 4.3 Patrol Team
+
+* Receive SOS alerts
+* Access limited case information
+* View live location of users
+* Respond to incidents on ground
+
+### 4.4 Super Admin
+
+* Full system control
+* Manage roles and permissions
+* Monitor all reports and cases
+* Override decisions if required
+
+---
+
+## 5. Core Features
+
+### 5.1 Authentication System
+
+* University-based login
+* Unique UID assigned to each user
+* Identity masked across system (except admins)
+
+---
+
+### 5.2 Incident Reporting System
+
+Users can submit:
+
+* Incident description
+* Location
+* Incident type
+* Optional evidence (images/videos)
+
+Flow:
+
+* Routed to security admin
+* Investigated under moderation workflow
+
+---
+
+### 5.3 Report Status Tracking
+
+Users can track report progress:
+
+* Submitted
+* Under Review
+* Investigation Ongoing
+* Action Taken
+* Closed
+
+---
+
+### 5.4 SOS / Emergency System
+
+On SOS trigger:
+
+* Emergency case created instantly
+* Security admins notified
+* Nearby patrol teams alerted
+* Live tracking starts automatically
+
+---
+
+### 5.5 Live Location Tracking
+
+* Continuous real-time tracking
+* Visible only to authorized personnel
+* Used for emergency response and patrol navigation
+
+---
+
+### 5.6 Role-Based Access Control (RBAC)
+
+* Student → Own reports only
+* Patrol → Assigned cases only
+* Security Admin → Assigned + active cases
+* Super Admin → Full access
+
+---
+
+### 5.7 Privacy & Security
+
+* UID used instead of identity
+* Real identity visible only to admins
+* No public access to reports
+* Secure handling of sensitive data
+
+---
+
+## 6. System Workflows
+
+### 6.1 Reporting Workflow
+
+1. Student submits report
+2. Report stored securely
+3. Security admin reviews
+4. Investigation initiated
+5. Status updated continuously
+6. Action taken
+7. Case closed
+
+---
+
+### 6.2 Emergency (SOS) Workflow
+
+1. User presses SOS
+2. Emergency case created
+3. Live tracking starts
+4. Alerts sent to:
+
+   * Security Admin
+   * Nearby Patrol Team
+5. Patrol dispatched
+6. Incident handled
+7. Case logged and closed
+
+---
+
+## 7. Constraints
+
+* Must prevent misuse and false reporting
+* Must ensure user privacy and confidentiality
+* Real-time system must be reliable
+* Evidence must be stored securely
+
+---
+
+## 8. Success Metrics
+
+* Average SOS response time
+* Case resolution rate
+* Number of reports filed
+* Reduction in unresolved complaints
+* User trust and satisfaction
+
+---
+
+## 9. Out of Scope (MVP)
+
+* Public complaint feed
+* Social/community features
+* AI-based predictions
+* Multi-campus integration
+
+---
+
+## Status: Finalized PRD (Clean Version)
